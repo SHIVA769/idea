@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: #0f172a;
+    background-color: #f8fafc;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 7 Storefront Theme Token Classes */
+.theme-home-decor {
+  --primary: #936a4a;
+  --primary-hover: #7b563a;
+  --accent: #d4a373;
+  --bg-page: #fefae0;
+  --font-heading: 'Playfair Display', Georgia, serif;
+}
+
+.theme-gadgets {
+  --primary: #0284c7;
+  --primary-hover: #0369a1;
+  --accent: #38bdf8;
+  --bg-page: #0f172a;
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+}
+
+.theme-fashion {
+  --primary: #18181b;
+  --primary-hover: #27272a;
+  --accent: #e4d5b7;
+  --bg-page: #fafafa;
+  --font-heading: 'Playfair Display', Georgia, serif;
+}
+
+.theme-bakery {
+  --primary: #e11d48;
+  --primary-hover: #be123c;
+  --accent: #fda4af;
+  --bg-page: #fff1f2;
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+}
+
+.theme-grocery {
+  --primary: #16a34a;
+  --primary-hover: #15803d;
+  --accent: #86efac;
+  --bg-page: #f0fdf4;
+  --font-heading: 'Inter', sans-serif;
+}
+
+.theme-car-accessories {
+  --primary: #dc2626;
+  --primary-hover: #b91c1c;
+  --accent: #f87171;
+  --bg-page: #18181b;
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+}
+
+.theme-toys {
+  --primary: #7c3aed;
+  --primary-hover: #6d28d9;
+  --accent: #f59e0b;
+  --bg-page: #faf5ff;
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+}
