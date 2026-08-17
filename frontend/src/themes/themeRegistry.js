@@ -1,6 +1,7 @@
 export const THEME_REGISTRY = {
   'theme-home-decor': {
     id: 'theme-home-decor',
+    
     name: 'Home Decor & Furniture',
     category: 'Home & Living',
     tagline: 'Timeless Artisanal Home Elegance',
