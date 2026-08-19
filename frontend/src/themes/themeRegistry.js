@@ -17,6 +17,8 @@ export const THEME_REGISTRY = {
     saleBadge: 'bg-[#c2784b] text-white',
     cartBtn: 'bg-[#936a4a] hover:bg-[#7b563a] text-white',
     navActive: 'text-[#936a4a] border-b-2 border-[#936a4a]',
+    heroGradient: 'bg-gradient-to-br from-[#f4ece1] via-[#faf8f5] to-[#e7d5c2]',
+    cardRadius: 'rounded-xl',
   },
   'theme-gadgets': {
     id: 'theme-gadgets',
@@ -36,6 +38,8 @@ export const THEME_REGISTRY = {
     cartBtn: 'bg-sky-600 hover:bg-sky-500 text-white',
     navActive: 'text-sky-400 border-b-2 border-sky-400',
     isDark: true,
+    heroGradient: 'bg-gradient-to-br from-[#0b0f19] via-[#111827] to-[#082f49]',
+    cardRadius: 'rounded-lg',
   },
   'theme-fashion': {
     id: 'theme-fashion',
@@ -54,6 +58,8 @@ export const THEME_REGISTRY = {
     saleBadge: 'bg-black text-white font-medium',
     cartBtn: 'bg-black hover:bg-zinc-800 text-white',
     navActive: 'text-black border-b-2 border-black font-semibold',
+    heroGradient: 'bg-gradient-to-br from-zinc-100 via-white to-zinc-200',
+    cardRadius: 'rounded-none',
   },
   'theme-bakery': {
     id: 'theme-bakery',
@@ -72,6 +78,8 @@ export const THEME_REGISTRY = {
     saleBadge: 'bg-rose-600 text-white',
     cartBtn: 'bg-rose-600 hover:bg-rose-700 text-white',
     navActive: 'text-rose-600 border-b-2 border-rose-600',
+    heroGradient: 'bg-gradient-to-br from-rose-100 via-[#fffaf9] to-pink-200',
+    cardRadius: 'rounded-2xl',
   },
   'theme-grocery': {
     id: 'theme-grocery',
@@ -90,6 +98,8 @@ export const THEME_REGISTRY = {
     saleBadge: 'bg-emerald-600 text-white',
     cartBtn: 'bg-emerald-600 hover:bg-emerald-700 text-white',
     navActive: 'text-emerald-700 border-b-2 border-emerald-600 font-bold',
+    heroGradient: 'bg-gradient-to-br from-emerald-100 via-[#f8faf8] to-lime-100',
+    cardRadius: 'rounded-xl',
   },
   'theme-car-accessories': {
     id: 'theme-car-accessories',
@@ -109,6 +119,8 @@ export const THEME_REGISTRY = {
     cartBtn: 'bg-red-600 hover:bg-red-700 text-white',
     navActive: 'text-red-500 border-b-2 border-red-500',
     isDark: true,
+    heroGradient: 'bg-gradient-to-br from-[#121214] via-[#1a1a1e] to-[#450a0a]',
+    cardRadius: 'rounded-lg',
   },
   'theme-toys': {
     id: 'theme-toys',
@@ -127,6 +139,8 @@ export const THEME_REGISTRY = {
     saleBadge: 'bg-amber-500 text-white font-bold rounded-lg',
     cartBtn: 'bg-purple-600 hover:bg-purple-700 text-white rounded-xl',
     navActive: 'text-purple-600 border-b-2 border-purple-600',
+    heroGradient: 'bg-gradient-to-br from-purple-100 via-[#fcf8ff] to-amber-100',
+    cardRadius: 'rounded-2xl',
   },
   'theme-whatsapp-store': {
     id: 'theme-whatsapp-store',
@@ -150,6 +164,8 @@ export const THEME_REGISTRY = {
     cartBtn: 'bg-[#25D366] hover:bg-[#20ba59] text-white',
     navActive: 'text-[#25D366] font-semibold',
     badgeText: 'WhatsApp Checkout',
+    heroTextColor: 'text-slate-900',
+    cardRadius: 'rounded-2xl',
   },
 };
 

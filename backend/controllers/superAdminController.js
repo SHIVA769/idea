@@ -9,6 +9,7 @@ import { Currency } from '../models/Currency.js';
 import { Country, State, City } from '../models/Locations.js';
 import { ReferralSettings, ReferredUser, PayoutRequest } from '../models/Referral.js';
 import { MediaFile, CustomPage, Subscriber, ContactInquiry, LandingPageConfig } from '../models/LandingBuilder.js';
+import { Advertisement } from '../models/Advertisement.js';
 import { EmailTemplate, NotificationTemplate } from '../models/Templates.js';
 import {
   SystemSettings,
@@ -330,9 +331,49 @@ export const deleteMediaFile = async (req, res) => {
     return sendError(res, error.message, 500);
   }
 };
+// ==========================================
+// 5.5 Advertisements
+// ==========================================
+export const getAdvertisements = async (req, res) => {
+  try {
+    const advertisements = await Advertisement.find().sort({ sortOrder: 1, createdAt: -1 });
+    return sendSuccess(res, advertisements);
+  } catch (error) {
+    return sendError(res, error.message, 500);
+  }
+};
+
+export const createAdvertisement = async (req, res) => {
+  try {
+    const advertisement = await Advertisement.create(req.body);
+    return sendSuccess(res, advertisement, 'Advertisement created successfully.', 201);
+  } catch (error) {
+    return sendError(res, error.message, 400);
+  }
+};
+
+export const updateAdvertisement = async (req, res) => {
+  try {
+    const advertisement = await Advertisement.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!advertisement) return sendError(res, 'Advertisement not found.', 404);
+    return sendSuccess(res, advertisement, 'Advertisement updated successfully.');
+  } catch (error) {
+    return sendError(res, error.message, 400);
+  }
+};
+
+export const deleteAdvertisement = async (req, res) => {
+  try {
+    const advertisement = await Advertisement.findByIdAndDelete(req.params.id);
+    if (!advertisement) return sendError(res, 'Advertisement not found.', 404);
+    return sendSuccess(res, null, 'Advertisement deleted successfully.');
+  } catch (error) {
+    return sendError(res, error.message, 400);
+  }
+};
 
 // ==========================================
-// 5.5 Plans, Plan Requests, Plan Orders
+// 5.6 Plans, Plan Requests, Plan Orders
 // ==========================================
 export const getPlans = async (req, res) => {
   try {
@@ -379,7 +420,7 @@ export const createPlan = async (req, res) => {
       monthlyPrice: Number(monthlyPrice),
       yearlyPrice: calculatedYearly,
       description,
-      maxStores: Number(maxStores) || 1,
+      maxStores: Number(maxStores) || 10,
       maxUsersPerStore: Number(maxUsersPerStore) || 2,
       maxProductsPerStore: Number(maxProductsPerStore) || 20,
       storageLimitGB: Number(storageLimitGB) || 1,

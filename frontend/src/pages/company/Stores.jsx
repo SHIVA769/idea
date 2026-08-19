@@ -37,6 +37,8 @@ export const Stores = () => {
   const [storeForm, setStoreForm] = useState({
     name: '',
     slug: '',
+    logo: '',
+    bannerImage: '',
     theme: 'theme-whatsapp-store',
     welcomeMessage: 'Welcome to our official online store! Enjoy direct WhatsApp ordering.',
     copyrightText: '© WhatsStore. All rights reserved.',
@@ -124,6 +126,8 @@ export const Stores = () => {
     setStoreForm({
       name: store.name,
       slug: store.slug,
+      logo: store.logo || '',
+      bannerImage: store.bannerImage || '',
       theme: store.theme || 'theme-home-decor',
       welcomeMessage: store.welcomeMessage || '',
       copyrightText: store.copyrightText || '',
@@ -163,6 +167,8 @@ export const Stores = () => {
             setStoreForm({
               name: '',
               slug: '',
+              logo: '',
+              bannerImage: '',
               theme: 'theme-whatsapp-store',
               welcomeMessage: 'Welcome to our store! Enjoy fast delivery and direct WhatsApp ordering.',
               copyrightText: '© WhatsStore. All rights reserved.',
@@ -314,6 +320,87 @@ export const Stores = () => {
                       className="w-full px-3 py-2 text-sm font-mono bg-slate-50 dark:bg-slate-800 border rounded-lg focus:ring-2 focus:ring-primary-500"
                     />
                   </div>
+                </div>
+
+                <div className="flex items-end gap-3">
+                  <div className="flex-1">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Store Logo</label>
+                    <input
+                      type="text"
+                      placeholder="https://example.com/logo.png"
+                      value={storeForm.logo?.startsWith('data:') ? '' : storeForm.logo}
+                      onChange={(e) => setStoreForm({ ...storeForm, logo: e.target.value.trim() })}
+                      className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                    />
+                    <div className="flex items-center gap-2 mt-2">
+                      <label className="inline-flex items-center px-2.5 py-1.5 text-[10px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer">
+                        Choose image file
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 2 * 1024 * 1024) {
+                              alert('Logo must be smaller than 2MB.');
+                              return;
+                            }
+                            const reader = new FileReader();
+                            reader.onload = () => setStoreForm((previous) => ({ ...previous, logo: reader.result }));
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </label>
+                      <span className="text-[10px] text-slate-400">or paste an image URL</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1">Displayed in the storefront header and product cards.</p>
+                  </div>
+                  {storeForm.logo ? (
+                    <div className="w-14 h-14 rounded-xl border border-slate-200 bg-white p-1 shrink-0">
+                      <img src={storeForm.logo} alt="Logo preview" className="w-full h-full object-contain rounded-lg" />
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="flex items-end gap-3">
+                  <div className="flex-1">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Store Banner / Hero Image</label>
+                    <input
+                      type="text"
+                      placeholder="https://example.com/banner.jpg"
+                      value={storeForm.bannerImage?.startsWith('data:') ? '' : storeForm.bannerImage}
+                      onChange={(e) => setStoreForm({ ...storeForm, bannerImage: e.target.value.trim() })}
+                      className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border rounded-lg focus:ring-2 focus:ring-primary-500"
+                    />
+                    <div className="flex items-center gap-2 mt-2">
+                      <label className="inline-flex items-center px-2.5 py-1.5 text-[10px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer">
+                        Choose banner file
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,image/gif"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 5 * 1024 * 1024) {
+                              alert('Banner must be smaller than 5MB.');
+                              return;
+                            }
+                            const reader = new FileReader();
+                            reader.onload = () => setStoreForm((previous) => ({ ...previous, bannerImage: reader.result }));
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </label>
+                      <span className="text-[10px] text-slate-400">or paste an image URL</span>
+                    </div>
+                  </div>
+                  {storeForm.bannerImage ? (
+                    <div className="w-24 h-14 rounded-xl border border-slate-200 bg-white p-1 shrink-0">
+                      <img src={storeForm.bannerImage} alt="Banner preview" className="w-full h-full object-cover rounded-lg" />
+                    </div>
+                  ) : null}
                 </div>
 
                 {/* 7 Swappable Themes Selector */}

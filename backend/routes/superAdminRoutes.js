@@ -9,6 +9,10 @@ import {
   getMediaFiles,
   uploadMediaFile,
   deleteMediaFile,
+    getAdvertisements,
+    createAdvertisement,
+    updateAdvertisement,
+    deleteAdvertisement,
   getPlans,
   createPlan,
   updatePlan,
@@ -69,6 +73,13 @@ router.post('/companies/:id/reset-password', resetCompanyPassword);
 router.get('/media', getMediaFiles);
 router.post('/media/upload', upload.single('file'), uploadMediaFile);
 router.delete('/media/:id', deleteMediaFile);
+
+// Plans
+// Advertisements
+router.get('/advertisements', getAdvertisements);
+router.post('/advertisements', createAdvertisement);
+router.put('/advertisements/:id', updateAdvertisement);
+router.delete('/advertisements/:id', deleteAdvertisement);
 
 // Plans
 router.get('/plans', getPlans);

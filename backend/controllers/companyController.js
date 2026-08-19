@@ -114,7 +114,7 @@ export const getStores = async (req, res) => {
 export const createStore = async (req, res) => {
   try {
     const companyId = getCompanyId(req);
-    const { name, slug, description, email, theme, domainConfig, pwaConfig, welcomeMessage, storeDescription, address, socialLinks } = req.body;
+    const { name, slug, description, email, logo, bannerImage, theme, domainConfig, pwaConfig, welcomeMessage, storeDescription, address, socialLinks } = req.body;
 
     if (!name) return sendError(res, 'Store name is required.', 400);
 
@@ -128,6 +128,8 @@ export const createStore = async (req, res) => {
       slug: generatedSlug,
       description,
       email,
+      logo: logo || '',
+      bannerImage: bannerImage || '',
       theme: theme || 'theme-whatsapp-store',
       domainConfig: domainConfig || {},
       pwaConfig: pwaConfig || {},
@@ -242,6 +244,7 @@ export const createProduct = async (req, res) => {
       storeId,
       name,
       sku,
+      badge,
       categoryId,
       taxId,
       coverImage,
@@ -257,6 +260,7 @@ export const createProduct = async (req, res) => {
       specifications,
       details,
       variants,
+      hasVariants,
       customFields,
       status,
     } = req.body;
@@ -279,6 +283,7 @@ export const createProduct = async (req, res) => {
       name,
       slug,
       sku,
+      badge: badge || '',
       categoryId: categoryId || null,
       taxId: taxId || null,
       coverImage: imageUrl,
@@ -293,6 +298,7 @@ export const createProduct = async (req, res) => {
       specifications: specifications || '',
       details: details || '',
       variants: variants || [],
+      hasVariants: !!hasVariants,
       customFields: customFields || [],
       status: status || 'active',
     });

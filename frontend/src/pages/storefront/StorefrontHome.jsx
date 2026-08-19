@@ -6,6 +6,7 @@ import { useCart } from '../../context/CartContext';
 import { useStorefrontCatalog } from '../../layouts/StorefrontLayout';
 import {
   StorefrontHero,
+  StorefrontAdvertisements,
   StorefrontCategoryRow,
   StorefrontFeaturesBar,
   StorefrontPromoBanner,
@@ -112,6 +113,10 @@ export const StorefrontHome = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <StorefrontAdvertisements advertisements={storeData?.advertisements} />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <StorefrontCategoryRow
             categories={categories}
             selectedCategory={selectedCategory}
@@ -153,7 +158,9 @@ export const StorefrontHome = () => {
                 <WhatsAppProductCard
                   key={product._id}
                   product={product}
+                  themeConfig={themeConfig}
                   storeName={storeData?.name}
+                  storeLogo={storeData?.logo}
                   storeWhatsAppPhone={storeData?.whatsappWidget?.phoneNumber}
                   onQuickView={openQuickView}
                   onQuickAdd={handleQuickAdd}
@@ -207,13 +214,15 @@ export const StorefrontHome = () => {
         {themeConfig.heroImage && (
           <div className="w-full md:w-1/2 flex justify-center z-10">
             <img
-              src={themeConfig.heroImage}
+              src={storeData?.bannerImage || themeConfig.heroImage}
               alt="Hero Showcase"
               className="max-h-72 object-cover rounded-2xl shadow-2xl transform hover:scale-105 transition-transform duration-500"
             />
           </div>
         )}
       </div>
+
+      <StorefrontAdvertisements advertisements={storeData?.advertisements} />
 
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -277,12 +286,15 @@ export const StorefrontHome = () => {
             <div
               key={product._id}
               onClick={() => openQuickView(product)}
-              className={`group cursor-pointer rounded-2xl overflow-hidden transition-all duration-300 ${themeConfig.productCard} flex flex-col justify-between`}
+              className={`group cursor-pointer overflow-hidden transition-all duration-300 ${themeConfig.productCard} ${themeConfig.cardRadius || 'rounded-2xl'} flex flex-col justify-between`}
             >
               <div>
                 <div className="px-4 pt-4 pb-2">
                   <div className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                    <span className="truncate">{storeData?.name || 'Store'}</span>
+                    <span className="flex items-center gap-1.5 truncate">
+                      {storeData?.logo ? <img src={storeData.logo} alt="" className="w-4 h-4 rounded object-contain" /> : null}
+                      <span className="truncate">{storeData?.name || 'Store'}</span>
+                    </span>
                     <span className="text-slate-400">{product.categoryId?.name || 'General'}</span>
                   </div>
                 </div>
@@ -293,9 +305,14 @@ export const StorefrontHome = () => {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
 
+                  {product.badge && (
+                    <span className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm ${themeConfig.saleBadge}`}>
+                      {product.badge}
+                    </span>
+                  )}
                   {product.salePrice > 0 && (
-                    <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white uppercase tracking-wider shadow-sm">
-                      Sale
+                    <span className={`absolute top-3 ${product.badge ? 'left-24' : 'left-3'} px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm ${themeConfig.saleBadge}`}>
+                      -{Math.round(((product.price - product.salePrice) / product.price) * 100)}%
                     </span>
                   )}
 
@@ -308,10 +325,10 @@ export const StorefrontHome = () => {
                 </div>
 
                 <div className="p-4 space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    {product.categoryId?.name || 'In Stock'}
+                  <span className={`text-[10px] font-bold uppercase tracking-wider ${product.stockQuantity > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {product.stockQuantity > 0 ? `${product.stockQuantity} IN STOCK` : 'OUT OF STOCK'}
                   </span>
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2 group-hover:text-primary-600 transition-colors">
+                  <h3 className={`font-bold text-sm line-clamp-2 group-hover:opacity-70 transition-colors ${themeConfig.isDark ? 'text-white' : 'text-slate-900'} ${themeConfig.fontHeading}`}>
                     {product.name}
                   </h3>
                 </div>
@@ -319,7 +336,7 @@ export const StorefrontHome = () => {
 
               <div className="p-4 pt-0 flex items-center justify-between">
                 <div className="flex items-baseline space-x-1.5">
-                  <span className="text-base font-black text-slate-900 dark:text-white font-mono">
+                  <span className={`text-base font-black font-mono ${themeConfig.isDark ? 'text-white' : 'text-slate-900'}`}>
                     ${product.salePrice > 0 ? product.salePrice : product.price}
                   </span>
                   {product.salePrice > 0 && (
@@ -331,7 +348,7 @@ export const StorefrontHome = () => {
 
                 <button
                   onClick={(e) => handleQuickAdd(product, e)}
-                  className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 transition-transform active:scale-95 shadow-2xs"
+                  className={`p-2.5 rounded-xl transition-transform active:scale-95 shadow-2xs ${themeConfig.cartBtn}`}
                   title="Add to cart"
                 >
                   <ShoppingBag className="w-4 h-4" />

@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { useOutletContext, useParams, useLocation, Link } from 'react-router-dom';
-import { CheckCircle2, MessageCircle, Copy, FileText, ShoppingBag, ArrowRight } from 'lucide-react';
+import { CheckCircle2, MessageCircle, Copy, Download, ShoppingBag, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { downloadOrderPdf } from '../../utils/orderPdf';
 
 export const OrderSuccess = () => {
   const { slug } = useParams();
@@ -29,6 +30,10 @@ export const OrderSuccess = () => {
   const copyOrderNumber = () => {
     navigator.clipboard.writeText(orderData.orderNumber);
     alert('Order Number copied to clipboard!');
+  };
+
+  const downloadPdf = () => {
+    downloadOrderPdf(slug, orderData.orderNumber);
   };
 
   return (
@@ -96,18 +101,17 @@ export const OrderSuccess = () => {
           </div>
         )}
 
-        {/* Invoice Link */}
+        {/* Order PDF download */}
         <div className="flex items-center justify-between pt-2 text-xs">
-          <span className="text-slate-500 font-medium">Download Official PDF Invoice</span>
-          <a
-            href={`/api/storefront/${slug}/orders/${orderData.orderNumber}/invoice`}
-            target="_blank"
-            rel="noreferrer"
+          <span className="text-slate-500 font-medium">Download Order PDF</span>
+          <button
+            type="button"
+            onClick={downloadPdf}
             className="inline-flex items-center text-slate-900 dark:text-white font-bold hover:underline"
           >
-            <FileText className="w-3.5 h-3.5 mr-1" />
-            <span>Download Invoice PDF</span>
-          </a>
+            <Download className="w-3.5 h-3.5 mr-1" />
+            <span>Download PDF</span>
+          </button>
         </div>
       </div>
 

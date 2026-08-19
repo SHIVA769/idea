@@ -5,6 +5,20 @@ export const ROLES = {
   CUSTOMER: 'customer',
 };
 
+export const POINT_COSTS = {
+  addProduct: 5,
+  createStore: 20,
+  sendCampaign: 10,
+};
+
+export const COIN_BUNDLES = [
+  { id: 'starter', points: 1000, price: 9.99 },
+  { id: 'growth', points: 5000, price: 39.99 },
+];
+
+export const REFERRAL_REWARD_POINTS = 100;
+export const REFERRAL_COUPON_DISCOUNT_PERCENT = 20;
+
 export const PERMISSION_MODULES = [
   { id: 'dashboard', label: 'Dashboard', actions: ['view'] },
   { id: 'analytics', label: 'Analytics & Reports', actions: ['view', 'export'] },

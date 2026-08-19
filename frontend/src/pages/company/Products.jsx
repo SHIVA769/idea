@@ -44,6 +44,7 @@ export const Products = () => {
     storeId: '',
     name: '',
     sku: '',
+    badge: '',
     categoryId: '',
     description: '',
     richDescription: '',
@@ -157,6 +158,7 @@ export const Products = () => {
       storeId: activeStore?._id || merchantStores[0]?._id || '',
       name: '',
       sku: `SKU-${Math.floor(1000 + Math.random() * 9000)}`,
+      badge: 'NEW',
       categoryId: categories.length > 0 ? categories[0]._id : '',
       description: '',
       richDescription: '',
@@ -186,6 +188,7 @@ export const Products = () => {
       storeId: p.storeId?._id || p.storeId || activeStore?._id || '',
       name: p.name,
       sku: p.sku || '',
+      badge: p.badge || '',
       categoryId: p.categoryId?._id || p.categoryId || '',
       description: p.description || '',
       richDescription: p.richDescription || p.description || '',
@@ -221,6 +224,31 @@ export const Products = () => {
     }
   };
 
+  const addGalleryImages = (event) => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+
+    const remainingSlots = Math.max(0, 8 - productForm.images.length);
+    files.slice(0, remainingSlots).forEach((file) => {
+      if (!file.type.startsWith('image/')) return;
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error(`${file.name} is larger than 2MB.`);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        setProductForm((previous) => ({
+          ...previous,
+          images: [...previous.images, reader.result],
+          thumbnail: previous.thumbnail || reader.result,
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+    event.target.value = '';
+  };
+
   const formTabs = [
     { id: 'basic', label: '1. Basic Info' },
     { id: 'pricing', label: '2. Pricing & Taxes' },
@@ -229,6 +257,20 @@ export const Products = () => {
     { id: 'seo', label: '5. SEO Meta' },
     { id: 'specs', label: '6. Custom Specs' },
   ];
+
+  const updateVariant = (index, field, value) => {
+    const variants = [...productForm.variants];
+    variants[index] = { ...variants[index], [field]: value };
+    setProductForm({ ...productForm, variants });
+  };
+
+  const addVariant = () => {
+    setProductForm({
+      ...productForm,
+      hasVariants: true,
+      variants: [...productForm.variants, { name: 'Size', options: ['S', 'M', 'L'] }],
+    });
+  };
 
   const columns = [
     {
@@ -432,6 +474,19 @@ export const Products = () => {
                 </div>
 
                 <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Product Badge</label>
+                  <input
+                    type="text"
+                    maxLength={24}
+                    placeholder="NEW, BESTSELLER, LIMITED"
+                    value={productForm.badge}
+                    onChange={(e) => setProductForm({ ...productForm, badge: e.target.value.toUpperCase() })}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border rounded-lg uppercase"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">Shown on the storefront product image. Leave blank to hide it.</p>
+                </div>
+
+                <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Short Description</label>
                   <input
                     type="text"
@@ -546,6 +601,39 @@ export const Products = () => {
                   />
                   <span>This product has multiple options (e.g. Size, Color)</span>
                 </label>
+
+                <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Options shown to customers</span>
+                    <button type="button" onClick={addVariant} className="text-xs font-bold text-emerald-600 hover:underline">
+                      + Add option group
+                    </button>
+                  </div>
+                  {productForm.variants.map((variant, index) => (
+                    <div key={`${variant.name}-${index}`} className="grid grid-cols-[110px_1fr_auto] gap-2 items-center">
+                      <input
+                        value={variant.name || ''}
+                        onChange={(e) => updateVariant(index, 'name', e.target.value)}
+                        placeholder="Size"
+                        className="px-2 py-2 text-xs bg-slate-50 dark:bg-slate-800 border rounded-lg"
+                      />
+                      <input
+                        value={(variant.options || []).join(', ')}
+                        onChange={(e) => updateVariant(index, 'options', e.target.value.split(',').map((option) => option.trim()).filter(Boolean))}
+                        placeholder="S, M, L, XL"
+                        className="px-2 py-2 text-xs bg-slate-50 dark:bg-slate-800 border rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setProductForm({ ...productForm, variants: productForm.variants.filter((_, itemIndex) => itemIndex !== index) })}
+                        className="text-xs text-rose-500 hover:text-rose-700"
+                        title="Remove option group"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -561,6 +649,41 @@ export const Products = () => {
                     onChange={(e) => setProductForm({ ...productForm, thumbnail: e.target.value })}
                     className="w-full p-2 bg-slate-50 dark:bg-slate-800 border rounded-lg font-mono text-[11px]"
                   />
+                </div>
+
+                <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <label className="block font-semibold">Product Gallery</label>
+                      <p className="text-[10px] text-slate-400">Add up to 8 photos. First photo is used as the cover.</p>
+                    </div>
+                    <label className="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[10px] font-bold cursor-pointer hover:bg-slate-700">
+                      Upload Photos
+                      <input type="file" accept="image/*" multiple onChange={addGalleryImages} className="hidden" />
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                    {productForm.images.map((image, index) => (
+                      <div key={`${image.slice(0, 20)}-${index}`} className="relative aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                        <img src={image} alt={`Product gallery ${index + 1}`} className="w-full h-full object-cover" />
+                        {productForm.thumbnail === image && (
+                          <span className="absolute bottom-0 inset-x-0 bg-slate-900/75 text-white text-[9px] text-center py-0.5">Cover</span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setProductForm((previous) => {
+                            const images = previous.images.filter((_, imageIndex) => imageIndex !== index);
+                            return { ...previous, images, thumbnail: previous.thumbnail === image ? images[0] || '' : previous.thumbnail };
+                          })}
+                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-600 text-white text-xs font-bold"
+                          title="Remove photo"
+                        >
+                          x
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

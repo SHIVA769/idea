@@ -23,11 +23,12 @@ export const CompanyPlans = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/company/plan-details');
+      const res = await api.get('/company/plans');
       if (res.data?.success) {
         setPlans(res.data.data.plans || []);
-        setCompanyPlan(res.data.data.companyPlan || null);
+        setCompanyPlan(res.data.data.currentPlan || null);
         setUsage(res.data.data.usage || {});
+        setBillingCycle(res.data.data.billingCycle || 'monthly');
       }
     } catch (err) {
       console.error('Failed to load plan details:', err);
@@ -60,9 +61,9 @@ export const CompanyPlans = () => {
   const handleSubscribe = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.post('/company/subscribe-plan', {
+      const res = await api.post('/company/plans/subscribe', {
         planId: selectedPlan._id,
-        billingCycle,
+        duration: billingCycle,
         couponCode,
         paymentMethod,
       });

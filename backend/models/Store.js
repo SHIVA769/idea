@@ -8,6 +8,7 @@ const storeSchema = new mongoose.Schema(
     description: { type: String, default: '' },
     email: { type: String, default: '' },
     logo: { type: String, default: '' },
+    bannerImage: { type: String, default: '' },
     favicon: { type: String, default: '' },
     welcomeMessage: { type: String, default: 'Welcome to our store! Discover premium products & order instantly via WhatsApp.' },
     storeDescription: { type: String, default: '' },

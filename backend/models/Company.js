@@ -16,6 +16,7 @@ const companySchema = new mongoose.Schema(
     referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', default: null },
     referralBalance: { type: Number, default: 0 },
     totalCommissionEarned: { type: Number, default: 0 },
+    pointsBalance: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );

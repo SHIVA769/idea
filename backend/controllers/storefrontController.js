@@ -1,3 +1,4 @@
+import { Advertisement } from '../models/Advertisement.js';
 import { Store } from '../models/Store.js';
 import { Product, Category, Tax, Order, Customer, ShippingMethod, CompanyMessagingSettings } from '../models/ECommerce.js';
 import { StoreCoupon } from '../models/StoreCoupon.js';
@@ -40,6 +41,15 @@ export const getStoreBySlug = async (req, res) => {
       endDate: { $gte: new Date() },
     }).sort({ createdAt: -1 });
 
+    const now = new Date();
+    const advertisements = await Advertisement.find({
+      status: 'active',
+      $and: [
+        { $or: [{ startAt: null }, { startAt: { $lte: now } }] },
+        { $or: [{ endAt: null }, { endAt: { $gte: now } }] },
+      ],
+    }).sort({ sortOrder: 1, createdAt: -1 });
+
     return sendSuccess(res, {
       store: {
         id: store._id,
@@ -48,6 +58,7 @@ export const getStoreBySlug = async (req, res) => {
         description: store.description,
         email: store.email,
         logo: store.logo,
+        bannerImage: store.bannerImage,
         favicon: store.favicon,
         welcomeMessage: store.welcomeMessage,
         storeDescription: store.storeDescription,
@@ -68,6 +79,13 @@ export const getStoreBySlug = async (req, res) => {
               description: featuredCoupon.description,
             }
           : null,
+              advertisements: advertisements.map((ad) => ({
+                id: ad._id,
+                title: ad.title,
+                description: ad.description,
+                imageUrl: ad.imageUrl,
+                linkUrl: ad.linkUrl,
+              })),
       },
       paymentOptions: {
         codEnabled: messaging?.codEnabled ?? true,

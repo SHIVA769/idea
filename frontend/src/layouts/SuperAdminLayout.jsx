@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Building2,
-  FolderOpen,
+  Megaphone,
   CreditCard,
   Tag,
   Coins,
@@ -35,7 +35,7 @@ export const SuperAdminLayout = () => {
   const navItems = [
     { label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
     { label: 'Companies', path: '/admin/companies', icon: Building2 },
-    { label: 'Media Library', path: '/admin/media', icon: FolderOpen },
+    { label: 'Advertisements', path: '/admin/advertisements', icon: Megaphone },
     { label: 'Subscription Plans', path: '/admin/plans', icon: CreditCard },
     { label: 'Platform Coupons', path: '/admin/coupons', icon: Tag },
     { label: 'Currencies', path: '/admin/currencies', icon: Coins },

@@ -284,20 +284,10 @@ export const StorefrontCheckout = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Street Address *</label>
-                <input
-                  type="text"
-                  value={contactInfo.street}
-                  onChange={(e) => setContactInfo({ ...contactInfo, street: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900"
-                  placeholder="123 Main Street, Suite 100"
-                />
-              </div>
-
-              {/* Cascading Address Component */}
+              {/* Street, country, state, city, and postal code */}
               <AddressCascade
-                value={{
+                values={{
+                  street: contactInfo.street,
                   country: contactInfo.country,
                   state: contactInfo.state,
                   city: contactInfo.city,

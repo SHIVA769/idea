@@ -42,6 +42,7 @@ const productSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, lowercase: true, trim: true },
     sku: { type: String, required: true, trim: true },
+    badge: { type: String, default: '', trim: true, maxlength: 24 },
     categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', default: null, index: true },
     taxId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tax', default: null },
     coverImage: { type: String, required: true },
@@ -69,6 +70,7 @@ const productSchema = new mongoose.Schema(
         options: [{ type: String, required: true }], // e.g. ["Black", "Silver", "Gold"]
       }
     ],
+    hasVariants: { type: Boolean, default: false },
 
     // Tab 6: Advanced (Custom Fields)
     customFields: [

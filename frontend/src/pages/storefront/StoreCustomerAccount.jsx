@@ -14,11 +14,13 @@ import {
   LogOut,
   MapPin,
   Lock,
+  Download,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AddressCascade } from '../../components/common/AddressCascade';
 import { Modal } from '../../components/common/Modal';
 import api from '../../api/axios';
+import { downloadOrderPdf } from '../../utils/orderPdf';
 
 export const StoreCustomerAccount = () => {
   const { slug } = useParams();
@@ -431,15 +433,14 @@ export const StoreCustomerAccount = () => {
                       <Eye className="w-3.5 h-3.5" />
                       <span>Details</span>
                     </button>
-                    <a
-                      href={`/api/storefront/${slug}/orders/${o.orderNumber}/invoice`}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => downloadOrderPdf(slug, o.orderNumber)}
                       className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg border border-slate-200"
-                      title="Download PDF Invoice"
+                      title="Download PDF invoice"
                     >
-                      <FileText className="w-4 h-4" />
-                    </a>
+                      <Download className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               ))}

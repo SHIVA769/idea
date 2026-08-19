@@ -77,7 +77,7 @@ export const ITEM_VARIABLES = [
   { var: '{item_total}', label: 'Item Line Total' },
 ];
 
-export const PERMISSION_MODULES_MAP = {
+export const PERMISSION_MODULES_MAP= {
   dashboard: { name: 'Dashboard', actions: ['view'] },
   analytics: { name: 'Analytics', actions: ['view'] },
   users: { name: 'Users & Staff', actions: ['view', 'create', 'edit', 'delete'] },

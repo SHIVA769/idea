@@ -7,7 +7,8 @@ export const QuickViewModal = ({ isOpen, onClose, product, storeWhatsAppPhone })
   const { addToCart, setIsDrawerOpen } = useCart();
   const [selectedImage, setSelectedImage] = useState(product?.thumbnail || '');
   const [quantity, setQuantity] = useState(1);
-  const [selectedVariant, setSelectedVariant] = useState(product?.variants?.[0]?.name || '');
+  const firstVariant = product?.variants?.[0];
+  const [selectedVariant, setSelectedVariant] = useState(firstVariant?.options?.[0] || '');
   const [added, setAdded] = useState(false);
 
   if (!product) return null;
@@ -100,23 +101,29 @@ export const QuickViewModal = ({ isOpen, onClose, product, storeWhatsAppPhone })
             {/* Variants */}
             {product.hasVariants && product.variants?.length > 0 && (
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Select Option
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {product.variants.map((v) => (
-                    <button
-                      key={v.name}
-                      type="button"
-                      onClick={() => setSelectedVariant(v.name)}
-                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg border ${
-                        selectedVariant === v.name
-                          ? 'bg-primary-50 text-primary-700 border-primary-500 dark:bg-primary-950 dark:text-primary-300'
-                          : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-                      }`}
-                    >
-                      {v.name}
-                    </button>
+                <div className="space-y-3">
+                  {product.variants.map((variant) => (
+                    <div key={variant.name}>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Select {variant.name}
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {(variant.options || []).map((option) => (
+                          <button
+                            key={`${variant.name}-${option}`}
+                            type="button"
+                            onClick={() => setSelectedVariant(option)}
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg border ${
+                              selectedVariant === option
+                                ? 'bg-primary-50 text-primary-700 border-primary-500 dark:bg-primary-950 dark:text-primary-300'
+                                : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>

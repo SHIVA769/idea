@@ -21,7 +21,7 @@ import { ManageLanguages } from './pages/auth/ManageLanguages';
 // Super Admin Pages
 import { SuperAdminDashboard } from './pages/superAdmin/Dashboard';
 import { Companies } from './pages/superAdmin/Companies';
-import { MediaLibrary } from './pages/superAdmin/MediaLibrary';
+import { Advertisements } from './pages/superAdmin/Advertisements';
 import { Plans } from './pages/superAdmin/Plans';
 import { PlatformCoupons } from './pages/superAdmin/PlatformCoupons';
 import { Currencies } from './pages/superAdmin/Currencies';
@@ -72,7 +72,7 @@ function App() {
       <Route path="/admin" element={<SuperAdminLayout />}>
         <Route index element={<SuperAdminDashboard />} />
         <Route path="companies" element={<Companies />} />
-        <Route path="media" element={<MediaLibrary />} />
+        <Route path="advertisements" element={<Advertisements />} />
         <Route path="plans" element={<Plans />} />
         <Route path="coupons" element={<PlatformCoupons />} />
         <Route path="currencies" element={<Currencies />} />
