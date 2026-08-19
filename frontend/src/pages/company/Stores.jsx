@@ -37,7 +37,7 @@ export const Stores = () => {
   const [storeForm, setStoreForm] = useState({
     name: '',
     slug: '',
-    theme: 'theme-home-decor',
+    theme: 'theme-whatsapp-store',
     welcomeMessage: 'Welcome to our official online store! Enjoy direct WhatsApp ordering.',
     copyrightText: '© WhatsStore. All rights reserved.',
     address: { street: '', country: 'United States', state: 'California', city: 'Los Angeles', postalCode: '90001' },
@@ -81,16 +81,41 @@ export const Stores = () => {
   const handleSaveStore = async (e) => {
     e.preventDefault();
     try {
+      let persistedStore = null;
       if (editingStore) {
-        await api.put(`/company/stores/${editingStore._id}`, storeForm);
+        const res = await api.put(`/company/stores/${editingStore._id}`, storeForm);
+        persistedStore = res.data?.data || null;
       } else {
-        await api.post('/company/stores', storeForm);
+        const res = await api.post('/company/stores', storeForm);
+        persistedStore = res.data?.data || null;
       }
+
       setIsStoreModalOpen(false);
       setEditingStore(null);
-      fetchStores();
+
+      if (persistedStore?._id) {
+        setActiveStore(persistedStore);
+      }
+
+      await fetchStores();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to save store');
+    }
+  };
+
+  const handleDeleteStore = async (storeId) => {
+    if (!window.confirm('Delete this store and its catalog? This action cannot be undone.')) return;
+
+    try {
+      await api.delete(`/company/stores/${storeId}`);
+      await fetchStores();
+
+      if (activeStore?._id === storeId) {
+        const nextStore = stores.find((s) => s._id !== storeId) || null;
+        setActiveStore(nextStore);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete store');
     }
   };
 
@@ -138,7 +163,7 @@ export const Stores = () => {
             setStoreForm({
               name: '',
               slug: '',
-              theme: 'theme-home-decor',
+              theme: 'theme-whatsapp-store',
               welcomeMessage: 'Welcome to our store! Enjoy fast delivery and direct WhatsApp ordering.',
               copyrightText: '© WhatsStore. All rights reserved.',
               address: { street: '', country: 'United States', state: 'California', city: 'Los Angeles', postalCode: '90001' },
@@ -202,6 +227,13 @@ export const Stores = () => {
                     <ExternalLink className="w-4 h-4" />
                   </a>
                   <button
+                    onClick={() => window.open(`${window.location.origin}/store/${store.slug}?preview=1`, '_blank', 'noopener,noreferrer')}
+                    className="p-2 text-slate-600 hover:text-emerald-600 rounded-lg hover:bg-slate-100"
+                    title="Open public preview"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={() => {
                       setQrStoreTarget(store);
                       setIsQRModalOpen(true);
@@ -217,6 +249,13 @@ export const Stores = () => {
                     title="Edit Store Settings"
                   >
                     <Settings className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteStore(store._id)}
+                    className="p-2 text-slate-600 hover:text-rose-600 rounded-lg hover:bg-rose-50"
+                    title="Delete Store"
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -438,6 +477,17 @@ export const Stores = () => {
             )}
 
             <div className="flex justify-end space-x-2 pt-4 border-t">
+              <button
+                type="button"
+                onClick={() => {
+                  const previewSlug = (storeForm.slug || 'preview-store').toLowerCase().replace(/[^a-z0-9-]/g, '');
+                  const previewUrl = `${window.location.origin}/store/${previewSlug}?preview=1&theme=${encodeURIComponent(storeForm.theme || 'theme-whatsapp-store')}&name=${encodeURIComponent(storeForm.name || 'Store Preview')}`;
+                  window.open(previewUrl, '_blank', 'noopener,noreferrer');
+                }}
+                className="px-4 py-2 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg border border-amber-200"
+              >
+                Live Theme Preview
+              </button>
               <button type="button" onClick={() => setIsStoreModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">
                 Cancel
               </button>

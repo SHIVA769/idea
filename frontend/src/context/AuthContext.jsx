@@ -42,6 +42,7 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     setActiveStore(null);
+    window.location.assign('/login');
   };
 
   const updateUser = (updatedData) => {

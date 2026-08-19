@@ -25,9 +25,12 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       const isAuthRoute = window.location.pathname.startsWith('/login') || window.location.pathname.startsWith('/register');
-      if (!isAuthRoute && !window.location.pathname.startsWith('/store')) {
-        localStorage.removeItem('whatsstore_token');
-        localStorage.removeItem('whatsstore_user');
+      const isStoreRoute = window.location.pathname.startsWith('/store');
+
+      localStorage.removeItem('whatsstore_token');
+
+      if (!isAuthRoute && !isStoreRoute) {
+        window.location.assign('/login');
       }
     }
     return Promise.reject(error);

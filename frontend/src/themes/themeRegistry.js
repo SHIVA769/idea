@@ -128,8 +128,38 @@ export const THEME_REGISTRY = {
     cartBtn: 'bg-purple-600 hover:bg-purple-700 text-white rounded-xl',
     navActive: 'text-purple-600 border-b-2 border-purple-600',
   },
+  'theme-whatsapp-store': {
+    id: 'theme-whatsapp-store',
+    name: 'WhatsApp Store',
+    category: 'WhatsApp Commerce',
+    tagline: 'Shop Smart on WhatsApp',
+    isWhatsAppStore: true,
+    fontHeading: 'font-sans font-bold',
+    bgPage: 'bg-white',
+    cardBg: 'bg-white',
+    headerBg: 'bg-white border-b border-slate-100 shadow-sm',
+    bannerImage: 'https://images.unsplash.com/photo-1611162617474-5b21e939e988?w=800&auto=format&fit=crop&q=80',
+    heroImage: 'https://images.unsplash.com/photo-1611162617474-5b21e939e988?w=800&auto=format&fit=crop&q=80',
+    heroGradient: 'bg-gradient-to-br from-[#dcf8e8] via-[#e8f8ef] to-[#f0fdf4]',
+    productCard: 'bg-white border border-slate-100 shadow-sm hover:shadow-lg',
+    primaryColor: '#25D366',
+    accentColor: '#128C7E',
+    primaryBtn: 'bg-[#25D366] hover:bg-[#20ba59] text-white shadow-sm',
+    badgeStyle: 'bg-[#dcf8e8] text-[#128C7E] border border-[#b8e6cc]',
+    saleBadge: 'bg-[#25D366] text-white',
+    cartBtn: 'bg-[#25D366] hover:bg-[#20ba59] text-white',
+    navActive: 'text-[#25D366] font-semibold',
+    badgeText: 'WhatsApp Checkout',
+  },
 };
 
 export const getThemeConfig = (themeId) => {
-  return THEME_REGISTRY[themeId] || THEME_REGISTRY['theme-home-decor'];
+  const theme = THEME_REGISTRY[themeId] || THEME_REGISTRY['theme-home-decor'];
+  return {
+    heroGradient: 'bg-gradient-to-br from-slate-800 to-slate-950',
+    heroImage: theme.bannerImage,
+    productCard: `${theme.cardBg} border border-slate-200/60 shadow-sm hover:shadow-md`,
+    badgeText: 'Special Collection',
+    ...theme,
+  };
 };

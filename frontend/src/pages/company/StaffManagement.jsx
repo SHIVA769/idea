@@ -197,8 +197,8 @@ export const StaffManagement = () => {
   };
 
   // Master Permission Toggle Helper
-  const allAvailablePerms = Object.entries(PERMISSION_MODULES).flatMap(([modKey, mod]) =>
-    mod.actions.map((act) => `${modKey}.${act}`)
+  const allAvailablePerms = PERMISSION_MODULES.flatMap((mod) =>
+    mod.actions.map((act) => `${mod.id}.${act}`)
   );
 
   const isAllPermsSelected = allAvailablePerms.every((p) => roleForm.permissions.includes(p));
@@ -565,9 +565,9 @@ export const StaffManagement = () => {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs">
-              {Object.entries(PERMISSION_MODULES).flatMap(([modKey, mod]) =>
+              {PERMISSION_MODULES.flatMap((mod) =>
                 mod.actions.map((act) => {
-                  const permKey = `${modKey}.${act}`;
+                  const permKey = `${mod.id}.${act}`;
                   const isChecked = roleForm.permissions.includes(permKey);
 
                   return (

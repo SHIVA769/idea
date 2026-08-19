@@ -9,7 +9,7 @@ export const CartDrawer = ({ storeSlug, themeConfig }) => {
     isDrawerOpen,
     setIsDrawerOpen,
     updateQuantity,
-    removeItem,
+    removeFromCart,
     clearCart,
     subtotal,
     appliedCoupon,
@@ -99,14 +99,14 @@ export const CartDrawer = ({ storeSlug, themeConfig }) => {
                     <div className="flex items-center space-x-2 mt-2">
                       <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.productId, item.selectedVariant, Math.max(1, item.quantity - 1))}
                           className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800"
                         >
                           <Minus className="w-3 h-3" />
                         </button>
                         <span className="px-2 font-mono font-bold text-[11px]">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.productId, item.selectedVariant, item.quantity + 1)}
                           className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800"
                         >
                           <Plus className="w-3 h-3" />
@@ -114,7 +114,7 @@ export const CartDrawer = ({ storeSlug, themeConfig }) => {
                       </div>
 
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => removeFromCart(item.productId, item.selectedVariant)}
                         className="text-slate-400 hover:text-rose-500 p-1"
                         title="Remove item"
                       >
@@ -124,7 +124,7 @@ export const CartDrawer = ({ storeSlug, themeConfig }) => {
                   </div>
 
                   <span className="font-mono font-black text-sm text-slate-900 dark:text-white">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    ${(Number(item.price || 0) * Number(item.quantity || 0)).toFixed(2)}
                   </span>
                 </div>
               ))

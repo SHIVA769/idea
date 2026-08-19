@@ -9,10 +9,13 @@ import {
   ShieldCheck,
   Globe,
   Sliders,
+  Eye,
+  Mail,
 } from 'lucide-react';
 import { Tabs } from '../../components/common/Tabs';
 import { VariableChipPanel } from '../../components/common/VariableChipPanel';
 import api from '../../api/axios';
+import toast from 'react-hot-toast';
 
 export const CompanySettings = () => {
   const [activeTab, setActiveTab] = useState('templates');
@@ -26,6 +29,9 @@ export const CompanySettings = () => {
   const [twilioForm, setTwilioForm] = useState({ enabled: false, accountSid: '', authToken: '', fromPhone: '' });
   const [telegramBotForm, setTelegramBotForm] = useState({ enabled: false, botToken: '', chatId: '' });
   const [webhookForm, setWebhookForm] = useState({ enabled: false, url: '', secretKey: '' });
+  const [testRecipient, setTestRecipient] = useState('');
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const fetchSettings = async () => {
     setLoading(true);
@@ -62,9 +68,52 @@ export const CompanySettings = () => {
         webhook: webhookForm,
       });
       setSaveSuccess(true);
+      toast.success('Settings saved successfully!');
       setTimeout(() => setSaveSuccess(false), 2000);
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to save settings');
+      toast.error(err.response?.data?.message || 'Failed to save settings');
+    }
+  };
+
+  const sampleTemplate = whatsappTemplate
+    .replaceAll('{store_name}', 'WonderKids Toy Land')
+    .replaceAll('{order_no}', 'ORD-1001')
+    .replaceAll('{customer_name}', 'Aisha Khan')
+    .replaceAll('{customer_phone}', '+91 98765 43210')
+    .replaceAll('{items_summary}', '1x Wooden Building Blocks')
+    .replaceAll('{shipping_address}', '12 Park Street, Kolkata')
+    .replaceAll('{subtotal}', '$24.00')
+    .replaceAll('{discount}', '$2.00')
+    .replaceAll('{shipping_cost}', '$4.00')
+    .replaceAll('{tax_amount}', '$1.30')
+    .replaceAll('{final_total}', '$27.30')
+    .replaceAll('{order_tracking_url}', 'https://example.com/orders/ORD-1001');
+
+  const handleSendWhatsApp = () => {
+    const phone = testRecipient.replace(/\D/g, '');
+    if (!phone) {
+      toast.error('Enter a WhatsApp number with country code.');
+      return;
+    }
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(sampleTemplate)}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleSendEmail = async () => {
+    if (!testRecipient || !testRecipient.includes('@')) {
+      toast.error('Enter a valid email address.');
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      const res = await api.post('/company/messaging-settings/test-email', {
+        to: testRecipient,
+        message: sampleTemplate,
+      });
+      toast.success(res.data?.message || 'Test email sent.');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to send test email.');
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -124,6 +173,37 @@ export const CompanySettings = () => {
                 onChange={(e) => setWhatsappTemplate(e.target.value)}
                 className="w-full p-3 text-xs font-mono bg-slate-50 dark:bg-slate-800 border rounded-xl"
               />
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setPreviewOpen(true)}
+                  className="inline-flex items-center px-3 py-2 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-50"
+                >
+                  <Eye className="w-3.5 h-3.5 mr-1.5" /> Preview
+                </button>
+                <input
+                  type="text"
+                  value={testRecipient}
+                  onChange={(e) => setTestRecipient(e.target.value)}
+                  placeholder="Email or WhatsApp number"
+                  className="flex-1 min-w-[190px] p-2 text-xs bg-slate-50 border rounded-lg"
+                />
+                <button
+                  type="button"
+                  onClick={handleSendWhatsApp}
+                  className="inline-flex items-center px-3 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 mr-1.5" /> WhatsApp
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSendEmail}
+                  disabled={sendingEmail}
+                  className="inline-flex items-center px-3 py-2 bg-sky-600 text-white text-xs font-bold rounded-lg hover:bg-sky-700 disabled:opacity-60"
+                >
+                  <Mail className="w-3.5 h-3.5 mr-1.5" /> {sendingEmail ? 'Sending...' : 'Send Email'}
+                </button>
+              </div>
             </div>
 
             <div className="pt-3 border-t">
@@ -265,6 +345,18 @@ export const CompanySettings = () => {
               onChange={(e) => setWebhookForm({ ...webhookForm, secretKey: e.target.value })}
               className="w-full p-2 bg-slate-50 dark:bg-slate-800 border rounded-lg font-mono"
             />
+          </div>
+        </div>
+      )}
+
+      {previewOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" onClick={() => setPreviewOpen(false)}>
+          <div className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Message Preview</h2>
+              <button type="button" onClick={() => setPreviewOpen(false)} className="text-xs text-slate-500 hover:text-slate-900">Close</button>
+            </div>
+            <pre className="max-h-[55vh] overflow-auto whitespace-pre-wrap rounded-xl bg-slate-50 dark:bg-slate-800 p-4 text-xs text-slate-700 dark:text-slate-200">{sampleTemplate || 'Enter a template to preview it.'}</pre>
           </div>
         </div>
       )}

@@ -25,9 +25,7 @@ import { MediaLibrary } from './pages/superAdmin/MediaLibrary';
 import { Plans } from './pages/superAdmin/Plans';
 import { PlatformCoupons } from './pages/superAdmin/PlatformCoupons';
 import { Currencies } from './pages/superAdmin/Currencies';
-import { Locations } from './pages/superAdmin/Locations';
 import { ReferralProgram } from './pages/superAdmin/ReferralProgram';
-import { LandingPageBuilder } from './pages/superAdmin/LandingPageBuilder';
 import { EmailTemplates } from './pages/superAdmin/EmailTemplates';
 import { NotificationTemplates } from './pages/superAdmin/NotificationTemplates';
 import { Settings as SuperAdminSettings } from './pages/superAdmin/Settings';
@@ -78,9 +76,7 @@ function App() {
         <Route path="plans" element={<Plans />} />
         <Route path="coupons" element={<PlatformCoupons />} />
         <Route path="currencies" element={<Currencies />} />
-        <Route path="locations" element={<Locations />} />
         <Route path="referrals" element={<ReferralProgram />} />
-        <Route path="landing-builder" element={<LandingPageBuilder />} />
         <Route path="templates/email" element={<EmailTemplates />} />
         <Route path="templates/notification" element={<NotificationTemplates />} />
         <Route path="settings" element={<SuperAdminSettings />} />
@@ -107,6 +103,7 @@ function App() {
       {/* Storefront Routes */}
       <Route path="/store/:slug" element={<StorefrontLayout />}>
         <Route index element={<StorefrontHome />} />
+        <Route path="preview" element={<StorefrontHome />} />
         <Route path="checkout" element={<StorefrontCheckout />} />
         <Route path="order-success/:orderId" element={<OrderSuccess />} />
         <Route path="customer/login" element={<StoreCustomerAccount />} />

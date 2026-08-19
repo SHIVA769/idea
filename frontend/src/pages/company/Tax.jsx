@@ -18,7 +18,7 @@ export const Tax = () => {
     if (!activeStore) return;
     setLoading(true);
     try {
-      const res = await api.get('/company/tax', { params: { storeId: activeStore._id } });
+      const res = await api.get('/company/taxes', { params: { storeId: activeStore._id } });
       if (res.data?.success) setTaxes(res.data.data.taxes || res.data.data);
     } catch (err) {
       console.error('Failed to load taxes:', err);
@@ -36,9 +36,9 @@ export const Tax = () => {
     try {
       const payload = { ...form, storeId: activeStore?._id || undefined };
       if (editingTax) {
-        await api.put(`/company/tax/${editingTax._id}`, payload);
+        await api.put(`/company/taxes/${editingTax._id}`, payload);
       } else {
-        await api.post('/company/tax', payload);
+        await api.post('/company/taxes', payload);
       }
       setIsModalOpen(false);
       setEditingTax(null);
@@ -52,7 +52,7 @@ export const Tax = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Delete this tax rule?')) {
       try {
-        await api.delete(`/company/tax/${id}`);
+        await api.delete(`/company/taxes/${id}`);
         fetchTaxes();
         toast.success('Tax rule deleted successfully');
       } catch (err) {

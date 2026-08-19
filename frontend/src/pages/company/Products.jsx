@@ -24,9 +24,10 @@ import api from '../../api/axios';
 import toast from 'react-hot-toast';
 
 export const Products = () => {
-  const { activeStore } = useAuth();
+  const { activeStore, setActiveStore } = useAuth();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [merchantStores, setMerchantStores] = useState([]);
   const [taxes, setTaxes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -40,6 +41,7 @@ export const Products = () => {
 
   // Form State (6 Tabs)
   const [productForm, setProductForm] = useState({
+    storeId: '',
     name: '',
     sku: '',
     categoryId: '',
@@ -62,14 +64,34 @@ export const Products = () => {
     status: 'active',
   });
 
+  const fetchStores = async () => {
+    try {
+      const res = await api.get('/company/stores');
+      if (res.data?.success) {
+        const stores = res.data.data.stores || [];
+        setMerchantStores(stores);
+
+        if (stores.length === 0) {
+          setActiveStore(null);
+          return;
+        }
+
+        const nextStore = stores.find((s) => s._id === activeStore?._id) || stores[0];
+        setActiveStore(nextStore);
+      }
+    } catch (err) {
+      console.error('Failed to load merchant stores:', err);
+    }
+  };
+
   const fetchData = async () => {
-    if (!activeStore) return;
+    const targetStoreId = activeStore?._id || 'all';
     setLoading(true);
     try {
       const [prodRes, catRes, taxRes] = await Promise.all([
-        api.get('/company/products', { params: { storeId: activeStore._id, search, categoryId: selectedCategory } }),
-        api.get('/company/categories', { params: { storeId: activeStore._id } }),
-        api.get('/company/tax', { params: { storeId: activeStore._id } }),
+        api.get('/company/products', { params: { storeId: targetStoreId, search, categoryId: selectedCategory } }),
+        api.get('/company/categories', { params: { storeId: targetStoreId } }),
+        api.get('/company/taxes', { params: { storeId: targetStoreId } }),
       ]);
       if (prodRes.data?.success) setProducts(prodRes.data.data.products || prodRes.data.data);
       if (catRes.data?.success) setCategories(catRes.data.data.categories || catRes.data.data);
@@ -82,22 +104,39 @@ export const Products = () => {
   };
 
   useEffect(() => {
+    fetchStores();
+  }, []);
+
+  useEffect(() => {
     fetchData();
   }, [activeStore, search, selectedCategory]);
 
+  useEffect(() => {
+    if (activeStore && !productForm.storeId) {
+      setProductForm((prev) => ({ ...prev, storeId: activeStore._id }));
+    }
+  }, [activeStore, productForm.storeId]);
+
   const handleSaveProduct = async (e) => {
     e.preventDefault();
-    if (!activeStore?._id) {
-      toast.error('Please select or create an active store before saving products.');
+    const selectedStoreId = productForm.storeId || activeStore?._id;
+
+    if (!selectedStoreId) {
+      toast.error('Please choose a store before saving the product.');
       return;
     }
+
     try {
       const payload = {
         ...productForm,
-        storeId: activeStore._id,
+        storeId: selectedStoreId,
         categoryId: productForm.categoryId || null,
         taxId: productForm.taxId || null,
+        coverImage: productForm.thumbnail || productForm.coverImage || '',
+        isDisplay: true,
+        status: productForm.status || 'active',
       };
+      delete payload.thumbnail;
       if (editingProduct) {
         await api.put(`/company/products/${editingProduct._id}`, payload);
       } else {
@@ -105,7 +144,7 @@ export const Products = () => {
       }
       setIsProductModalOpen(false);
       setEditingProduct(null);
-      fetchData();
+      await fetchData();
       toast.success(editingProduct ? 'Product updated successfully' : 'Product created successfully');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save product');
@@ -115,6 +154,7 @@ export const Products = () => {
   const openCreateModal = () => {
     setEditingProduct(null);
     setProductForm({
+      storeId: activeStore?._id || merchantStores[0]?._id || '',
       name: '',
       sku: `SKU-${Math.floor(1000 + Math.random() * 9000)}`,
       categoryId: categories.length > 0 ? categories[0]._id : '',
@@ -143,6 +183,7 @@ export const Products = () => {
   const openEditModal = (p) => {
     setEditingProduct(p);
     setProductForm({
+      storeId: p.storeId?._id || p.storeId || activeStore?._id || '',
       name: p.name,
       sku: p.sku || '',
       categoryId: p.categoryId?._id || p.categoryId || '',
@@ -157,7 +198,7 @@ export const Products = () => {
       lowStockThreshold: p.lowStockThreshold ?? 5,
       hasVariants: p.hasVariants || false,
       variants: p.variants || [],
-      thumbnail: p.thumbnail || '',
+      thumbnail: p.coverImage || p.thumbnail || '',
       images: p.images || [],
       seoTitle: p.seoTitle || '',
       seoDescription: p.seoDescription || '',
@@ -172,7 +213,7 @@ export const Products = () => {
     if (window.confirm('Delete this product from catalog?')) {
       try {
         await api.delete(`/company/products/${id}`);
-        fetchData();
+        await fetchData();
         toast.success('Product deleted successfully');
       } catch (err) {
         toast.error(err.response?.data?.message || 'Failed to delete product');
@@ -193,17 +234,20 @@ export const Products = () => {
     {
       header: 'Product',
       render: (p) => (
-        <div className="flex items-center space-x-3">
-          <img
-            src={p.thumbnail || 'https://via.placeholder.com/80'}
-            alt={p.name}
-            className="w-10 h-10 rounded-lg object-cover bg-slate-100 dark:bg-slate-800"
-          />
-          <div>
-            <span className="font-bold text-slate-900 dark:text-white block">{p.name}</span>
-            <span className="text-[11px] text-slate-400 font-mono">SKU: {p.sku}</span>
-          </div>
+        <div className="space-y-1">
+          <span className="font-bold text-slate-900 dark:text-white block">{p.name}</span>
+          <span className="text-[11px] text-slate-400 font-mono block">SKU: {p.sku || '—'}</span>
+          <span className="text-[10px] text-slate-500 block">{p.description || 'No description'}</span>
         </div>
+      ),
+    },
+    {
+      header: 'Store',
+      className: 'hidden lg:table-cell',
+      render: (p) => (
+        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+          {p.storeId?.name || '—'}
+        </span>
       ),
     },
     {
@@ -298,24 +342,23 @@ export const Products = () => {
           </select>
         }
         renderGridItem={(p) => (
-          <div key={p._id} className="bg-white dark:bg-slate-900 border rounded-xl overflow-hidden shadow-2xs group">
-            <div className="aspect-square bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
-              <img src={p.thumbnail} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-              <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-black bg-white/90 text-slate-900 font-mono shadow-xs">
-                ${p.price}
-              </span>
+          <div key={p._id} className="bg-white dark:bg-slate-900 border rounded-xl p-4 shadow-2xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-sm text-slate-900 dark:text-white">{p.name}</span>
+              <span className="text-[10px] font-mono text-slate-500">${p.price}</span>
             </div>
-            <div className="p-3">
-              <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">{p.name}</h4>
-              <p className="text-[10px] text-slate-400 font-mono mt-0.5">{p.stockQuantity} in stock</p>
-              <div className="pt-2 mt-2 border-t flex items-center justify-between">
-                <button onClick={() => openEditModal(p)} className="text-xs font-semibold text-emerald-600 hover:underline">
-                  Edit
-                </button>
-                <button onClick={() => handleDelete(p._id)} className="text-xs text-rose-500 hover:text-rose-700">
-                  Delete
-                </button>
-              </div>
+            <div className="text-[11px] text-slate-500 space-y-1">
+              <div>SKU: {p.sku || '—'}</div>
+              <div>Store: {p.storeId?.name || '—'}</div>
+              <div>Stock: {p.stockQuantity}</div>
+            </div>
+            <div className="pt-2 mt-2 border-t flex items-center justify-between">
+              <button onClick={() => openEditModal(p)} className="text-xs font-semibold text-emerald-600 hover:underline">
+                Edit
+              </button>
+              <button onClick={() => handleDelete(p._id)} className="text-xs text-rose-500 hover:text-rose-700">
+                Delete
+              </button>
             </div>
           </div>
         )}
@@ -357,6 +400,21 @@ export const Products = () => {
                       className="w-full px-3 py-2 text-sm font-mono bg-slate-50 dark:bg-slate-800 border rounded-lg uppercase"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Store *</label>
+                  <select
+                    required
+                    value={productForm.storeId}
+                    onChange={(e) => setProductForm({ ...productForm, storeId: e.target.value })}
+                    className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border rounded-lg"
+                  >
+                    <option value="">Select Store</option>
+                    {merchantStores.map((store) => (
+                      <option key={store._id} value={store._id}>{store.name}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>

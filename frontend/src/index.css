@@ -86,3 +86,11 @@
   --bg-page: #faf5ff;
   --font-heading: 'Plus Jakarta Sans', sans-serif;
 }
+
+.theme-whatsapp-store {
+  --primary: #25D366;
+  --primary-hover: #20ba59;
+  --accent: #128C7E;
+  --bg-page: #ffffff;
+  --font-heading: 'Inter', sans-serif;
+}

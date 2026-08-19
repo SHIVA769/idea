@@ -4,7 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { Modal } from '../../components/common/Modal';
 
 export const QuickViewModal = ({ isOpen, onClose, product, storeWhatsAppPhone }) => {
-  const { addItem, setIsDrawerOpen } = useCart();
+  const { addToCart, setIsDrawerOpen } = useCart();
   const [selectedImage, setSelectedImage] = useState(product?.thumbnail || '');
   const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState(product?.variants?.[0]?.name || '');
@@ -16,14 +16,21 @@ export const QuickViewModal = ({ isOpen, onClose, product, storeWhatsAppPhone })
   const galleryImages = [product.thumbnail, ...(product.images || [])].filter(Boolean);
 
   const handleAddToCart = () => {
-    addItem({
-      id: product._id,
-      name: product.name,
-      price: product.salePrice > 0 ? product.salePrice : product.price,
-      image: product.thumbnail,
-      variant: selectedVariant,
+    addToCart(
+      {
+        _id: product._id,
+        name: product.name,
+        sku: product.sku,
+        price: product.salePrice > 0 ? product.salePrice : product.price,
+        salePrice: product.salePrice,
+        thumbnail: product.thumbnail,
+        coverImage: product.coverImage || product.thumbnail,
+        stockQuantity: product.stockQuantity,
+        taxId: product.taxId,
+      },
       quantity,
-    });
+      selectedVariant || null
+    );
     setAdded(true);
     setTimeout(() => {
       setAdded(false);

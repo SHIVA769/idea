@@ -10,6 +10,29 @@ export const STORE_THEMES = Object.values(THEME_REGISTRY).map((t) => ({
 
 export const DEFAULT_THEME = 'theme-home-decor';
 
+export const PERMISSION_MODULES = [
+  { id: 'dashboard', label: 'Dashboard', actions: ['view'] },
+  { id: 'analytics', label: 'Analytics & Reports', actions: ['view', 'export'] },
+  { id: 'users', label: 'Staff & Users', actions: ['view', 'create', 'edit', 'delete', 'toggle_status'] },
+  { id: 'roles', label: 'Roles & Permissions', actions: ['view', 'create', 'edit', 'delete'] },
+  { id: 'plans', label: 'Plans & Billing', actions: ['view', 'subscribe', 'request'] },
+  { id: 'plan_requests', label: 'Plan Requests', actions: ['view', 'manage'] },
+  { id: 'plan_orders', label: 'Plan Orders', actions: ['view'] },
+  { id: 'settings', label: 'Settings', actions: ['view', 'edit'] },
+  { id: 'referral', label: 'Referral Program', actions: ['view', 'request_payout', 'manage'] },
+  { id: 'media', label: 'Media Library', actions: ['view', 'upload', 'delete'] },
+  { id: 'stores', label: 'Store Management', actions: ['view', 'create', 'edit', 'delete', 'settings'] },
+  { id: 'products', label: 'Products', actions: ['view', 'create', 'edit', 'delete'] },
+  { id: 'categories', label: 'Categories', actions: ['view', 'create', 'edit', 'delete'] },
+  { id: 'tax', label: 'Tax Rules', actions: ['view', 'create', 'edit', 'delete'] },
+  { id: 'orders', label: 'Orders', actions: ['view', 'edit', 'delete', 'export'] },
+  { id: 'customers', label: 'Customers', actions: ['view', 'create', 'edit', 'delete', 'export'] },
+  { id: 'coupons', label: 'Store Coupons', actions: ['view', 'create', 'edit', 'delete', 'toggle'] },
+  { id: 'shipping', label: 'Shipping Methods', actions: ['view', 'create', 'edit', 'delete'] },
+  { id: 'express_checkout', label: 'Express Checkout', actions: ['view', 'manage'] },
+  { id: 'webhooks', label: 'Webhooks', actions: ['view', 'create', 'edit', 'delete'] },
+];
+
 export const EMAIL_TEMPLATE_VARS = [
   { var: '{app_name}', label: 'App Name' },
   { var: '{company_name}', label: 'Company Name' },
@@ -54,7 +77,7 @@ export const ITEM_VARIABLES = [
   { var: '{item_total}', label: 'Item Line Total' },
 ];
 
-export const PERMISSION_MODULES = {
+export const PERMISSION_MODULES_MAP = {
   dashboard: { name: 'Dashboard', actions: ['view'] },
   analytics: { name: 'Analytics', actions: ['view'] },
   users: { name: 'Users & Staff', actions: ['view', 'create', 'edit', 'delete'] },

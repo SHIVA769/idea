@@ -32,37 +32,49 @@ export const CartProvider = ({ children }) => {
   }, [items, currentStoreSlug]);
 
   const addToCart = (product, quantity = 1, selectedVariant = null) => {
-    setItems((prev) => {
-      const variantKey = selectedVariant ? JSON.stringify(selectedVariant) : 'standard';
-      const existingIdx = prev.findIndex(
-        (i) => i.productId === product._id && JSON.stringify(i.selectedVariant) === JSON.stringify(selectedVariant)
-      );
+    const normalizedProduct = product || {};
+    const productId = normalizedProduct._id || normalizedProduct.id;
+    const effectiveVariant = selectedVariant ?? normalizedProduct.selectedVariant ?? normalizedProduct.variant ?? null;
+    const unitPrice = Number(
+      normalizedProduct.salePrice && Number(normalizedProduct.salePrice) > 0
+        ? normalizedProduct.salePrice
+        : normalizedProduct.price || 0
+    );
 
-      const unitPrice = product.salePrice !== null && product.salePrice > 0 ? product.salePrice : product.price;
+    setItems((prev) => {
+      const existingIdx = prev.findIndex(
+        (i) => i.productId === productId && JSON.stringify(i.selectedVariant) === JSON.stringify(effectiveVariant)
+      );
 
       if (existingIdx > -1) {
         const copy = [...prev];
-        copy[existingIdx].quantity += quantity;
+        copy[existingIdx].quantity += Number(quantity) || 1;
         return copy;
       }
 
       return [
         ...prev,
         {
-          productId: product._id,
-          name: product.name,
-          sku: product.sku,
-          image: product.coverImage,
+          productId,
+          name: normalizedProduct.name,
+          sku: normalizedProduct.sku || '',
+          image: normalizedProduct.coverImage || normalizedProduct.thumbnail || normalizedProduct.image || '',
           price: unitPrice,
-          taxRate: product.taxId?.rate || 0,
-          taxName: product.taxId?.name || '',
-          quantity,
-          selectedVariant,
-          stockQuantity: product.stockQuantity,
+          taxRate: normalizedProduct.taxId?.rate || 0,
+          taxName: normalizedProduct.taxId?.name || '',
+          quantity: Number(quantity) || 1,
+          selectedVariant: effectiveVariant,
+          stockQuantity: normalizedProduct.stockQuantity || 0,
         },
       ];
     });
     setIsDrawerOpen(true);
+  };
+
+  const addItem = (product, quantity = 1, selectedVariant = null) => {
+    const resolvedVariant =
+      selectedVariant ?? product?.selectedVariant ?? product?.variant ?? null;
+    addToCart(product, quantity, resolvedVariant);
   };
 
   const updateQuantity = (productId, selectedVariant, newQty) => {
@@ -128,8 +140,30 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  const applyCoupon = (code, value = 0, type = 'percentage') => {
+    if (!code) return { success: false, message: 'Coupon code is required.' };
+    const normalized = code.trim();
+    const discountValue = Number(value) || 0;
+    const nextCoupon = {
+      code: normalized,
+      discountType: type,
+      discountValue,
+      description: `Applied ${type === 'percentage' ? `${discountValue}%` : `$${discountValue}`} off`,
+    };
+    setAppliedCoupon(nextCoupon);
+    return { success: true, message: 'Coupon applied successfully!' };
+  };
+
   const removeCoupon = () => {
     setAppliedCoupon(null);
+  };
+
+  const removeItem = (productId, selectedVariant = null) => {
+    setItems((prev) =>
+      prev.filter(
+        (item) => !(item.productId === productId && JSON.stringify(item.selectedVariant) === JSON.stringify(selectedVariant))
+      )
+    );
   };
 
   return (
@@ -140,12 +174,15 @@ export const CartProvider = ({ children }) => {
         setIsDrawerOpen,
         initStoreCart,
         addToCart,
+        addItem,
         updateQuantity,
         removeFromCart,
         clearCart,
         appliedCoupon,
         applyCouponCode,
+        applyCoupon,
         removeCoupon,
+        removeItem,
         selectedShippingMethod,
         setSelectedShippingMethod,
         subtotal,
