@@ -24,6 +24,24 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const reactivateDemoAccounts = async () => {
+  try {
+    const result = await User.updateMany(
+      {
+        email: { $in: ['admin@whatsstore.io', 'owner@luxeretail.com'] },
+        status: { $in: ['inactive', 'disabled'] },
+      },
+      { $set: { status: 'active' } }
+    );
+
+    if (result.modifiedCount > 0) {
+      console.log(`[Init] Reactivated ${result.modifiedCount} stale demo account(s).`);
+    }
+  } catch (e) {
+    console.error('[Init Demo Restore Error]', e.message);
+  }
+};
+
 // Connect to MongoDB
 connectDB().then(async (conn) => {
   if (conn) {
@@ -32,6 +50,8 @@ connectDB().then(async (conn) => {
       if (userCount === 0) {
         console.log('[Init] No users found. Running initial database seed...');
         await seedDatabase();
+      } else {
+        await reactivateDemoAccounts();
       }
     } catch (e) {
       console.error('[Init Seed Error]', e.message);

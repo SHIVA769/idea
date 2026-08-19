@@ -12,7 +12,7 @@ const storeSchema = new mongoose.Schema(
     welcomeMessage: { type: String, default: 'Welcome to our store! Discover premium products & order instantly via WhatsApp.' },
     storeDescription: { type: String, default: '' },
     copyrightText: { type: String, default: '© WhatsStore. All rights reserved.' },
-    theme: { type: String, default: 'theme-home-decor' }, // 'theme-home-decor' | 'theme-gadgets' | 'theme-fashion' | 'theme-bakery' | 'theme-grocery' | 'theme-car-accessories' | 'theme-toys'
+    theme: { type: String, default: 'theme-home-decor' }, // 'theme-home-decor' | 'theme-gadgets' | 'theme-fashion' | 'theme-bakery' | 'theme-grocery' | 'theme-car-accessories' | 'theme-toys' | 'theme-whatsapp-store'
     
     // Address
     address: {

@@ -13,6 +13,15 @@ import { generateOrderInvoicePDF } from '../services/pdfInvoiceService.js';
 // ==========================================
 // 5.28 Public Storefront Endpoints
 // ==========================================
+
+const formatProductForStorefront = (product) => {
+  const doc = product.toObject ? product.toObject() : { ...product };
+  return {
+    ...doc,
+    thumbnail: doc.coverImage || doc.thumbnail || '',
+  };
+};
+
 export const getStoreBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
@@ -24,6 +33,12 @@ export const getStoreBySlug = async (req, res) => {
 
     // Get company messaging settings for WhatsApp/Telegram/COD availability
     const messaging = await CompanyMessagingSettings.findOne({ companyId: store.companyId });
+
+    const featuredCoupon = await StoreCoupon.findOne({
+      storeId: store._id,
+      status: 'active',
+      endDate: { $gte: new Date() },
+    }).sort({ createdAt: -1 });
 
     return sendSuccess(res, {
       store: {
@@ -45,6 +60,14 @@ export const getStoreBySlug = async (req, res) => {
         customCSS: store.customCSS,
         customJS: store.customJS,
         isMaintenance: store.isMaintenance,
+        featuredCoupon: featuredCoupon
+          ? {
+              code: featuredCoupon.code,
+              discountType: featuredCoupon.discountType,
+              discountValue: featuredCoupon.discountValue,
+              description: featuredCoupon.description,
+            }
+          : null,
       },
       paymentOptions: {
         codEnabled: messaging?.codEnabled ?? true,
@@ -87,7 +110,7 @@ export const getStoreCatalog = async (req, res) => {
 
     return sendSuccess(res, {
       categories,
-      products,
+      products: products.map(formatProductForStorefront),
     });
   } catch (error) {
     return sendError(res, error.message, 500);
@@ -107,7 +130,7 @@ export const getProductQuickView = async (req, res) => {
     product.viewsCount = (product.viewsCount || 0) + 1;
     await product.save();
 
-    return sendSuccess(res, product);
+    return sendSuccess(res, formatProductForStorefront(product));
   } catch (error) {
     return sendError(res, error.message, 500);
   }

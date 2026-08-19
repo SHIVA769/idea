@@ -278,6 +278,35 @@ const companyMessagingSettingsSchema = new mongoose.Schema(
     telegramChatId: { type: String, default: '' },
 
     // Message Templates
+    whatsappTemplate: {
+      type: String,
+      default: `*🛒 NEW ORDER: {order_no}*
+Store: {store_name}
+Customer: {customer_name}
+Phone: {customer_phone}
+
+*📦 Items:*
+{items_summary}
+
+*Subtotal:* {subtotal}
+*Tax:* {tax_amount}
+*Shipping:* {shipping_cost}
+*Discount:* -{discount}
+*💰 Final Total:* {final_total}
+
+*📍 Shipping Address:*
+{shipping_address}
+
+Thank you for shopping with us!`,
+    },
+    telegramTemplate: {
+      type: String,
+      default: `🚨 *New Order Alert: {order_no}*
+Store: {store_name}
+Customer: {customer_name} ({customer_phone})
+Total: {final_total}
+Tracking: {order_tracking_url}`,
+    },
     messageTemplate: {
       type: String,
       default: `*🛒 NEW ORDER: {order_no}*

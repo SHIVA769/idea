@@ -36,6 +36,7 @@ export const STORE_THEMES = [
   { id: 'theme-grocery', name: 'Supermarket & Grocery', category: 'grocery', description: 'Crisp green fresh UI, fast add-to-cart, badges for organic/fresh' },
   { id: 'theme-car-accessories', name: 'Car Accessories', category: 'automotive', description: 'Bold athletic/automotive styling, high contrast, technical specs' },
   { id: 'theme-toys', name: 'Toy & Kids', category: 'toys', description: 'Vibrant playful tones, rounded bubbly components, age group badges' },
+  { id: 'theme-whatsapp-store', name: 'WhatsApp Store', category: 'whatsapp', description: 'Official WhatsApp green branding, full e-commerce homepage with categories, hero, and product grid' },
 ];
 
 export const PAYMENT_GATEWAYS = [

@@ -241,10 +241,68 @@ export const forgotPassword = async (req, res) => {
     await user.save();
 
     const resetUrl = `${process.env.APP_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
+    const emailHTML = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; background: #f9fafb; border-radius: 8px; overflow: hidden; }
+            .header { background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%); padding: 30px; text-align: center; color: white; }
+            .header h1 { margin: 0; font-size: 24px; font-weight: bold; }
+            .content { padding: 30px; background: white; }
+            .message { margin-bottom: 24px; }
+            .message p { margin: 0 0 12px 0; color: #555; }
+            .button-wrapper { text-align: center; margin: 30px 0; }
+            .reset-button { display: inline-block; background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%); color: white; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; }
+            .reset-button:hover { opacity: 0.9; }
+            .link-text { color: #999; font-size: 12px; word-break: break-all; }
+            .footer { background: #f3f4f6; padding: 20px; text-align: center; color: #666; font-size: 12px; border-top: 1px solid #e5e7eb; }
+            .warning { background: #fef3c7; border-left: 4px solid #fbbf24; padding: 12px; margin-top: 20px; border-radius: 4px; color: #92400e; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🔐 Password Reset Request</h1>
+            </div>
+            
+            <div class="content">
+              <div class="message">
+                <p>Hi <strong>${user.name || 'there'}</strong>,</p>
+                <p>We received a request to reset the password associated with your WhatsStore account. Click the button below to set a new password:</p>
+              </div>
+              
+              <div class="button-wrapper">
+                <a href="${resetUrl}" class="reset-button">Reset Your Password</a>
+              </div>
+              
+              <p style="text-align: center; color: #999; font-size: 12px;">Or paste this link in your browser:</p>
+              <p style="text-align: center; word-break: break-all;"><span class="link-text">${resetUrl}</span></p>
+              
+              <div class="warning">
+                <strong>⏱️ This link expires in 1 hour</strong><br>
+                If you didn't request this reset, please ignore this email. Your account remains secure.
+              </div>
+              
+              <p style="margin-top: 24px; color: #666; font-size: 13px;">
+                If you need help, reply to this email or contact our support team at <a href="mailto:support@whatsstore.io" style="color: #0284c7; text-decoration: none;">support@whatsstore.io</a>
+              </p>
+            </div>
+            
+            <div class="footer">
+              <p style="margin: 0;">© 2026 WhatsStore. All rights reserved.<br>WhatsStore — SaaS E-commerce Platform for WhatsApp</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
     await sendEmail({
       to: user.email,
-      subject: 'Password Reset Request — WhatsStore',
-      html: `<p>You requested a password reset. Click the link below to set a new password:</p><a href="${resetUrl}">${resetUrl}</a><p>This link expires in 1 hour.</p>`,
+      subject: '🔐 Password Reset Request — WhatsStore',
+      html: emailHTML,
     });
 
     return sendSuccess(res, null, 'If this email exists, a password reset link has been dispatched.');

@@ -24,24 +24,9 @@ import {
   createCurrency,
   updateCurrency,
   deleteCurrency,
-  getLocationsData,
-  createCountry,
-  createState,
-  createCity,
   getReferralAdminData,
   updateReferralSettings,
   updatePayoutRequestStatus,
-  getLandingPageConfig,
-  saveLandingPageConfig,
-  getCustomPages,
-  createCustomPage,
-  updateCustomPage,
-  deleteCustomPage,
-  getSubscribers,
-  updateSubscriberStatus,
-  deleteSubscriber,
-  getContactInquiries,
-  deleteContactInquiry,
   getEmailTemplates,
   updateEmailTemplate,
   getNotificationTemplates,
@@ -106,29 +91,10 @@ router.post('/currencies', createCurrency);
 router.put('/currencies/:id', updateCurrency);
 router.delete('/currencies/:id', deleteCurrency);
 
-// Locations (Cascading Country -> State -> City)
-router.get('/locations', getLocationsData);
-router.post('/countries', createCountry);
-router.post('/states', createState);
-router.post('/cities', createCity);
-
 // Referral Program
 router.get('/referrals', getReferralAdminData);
 router.put('/referrals/settings', updateReferralSettings);
 router.put('/referrals/payouts/:id', updatePayoutRequestStatus);
-
-// Landing Builder & Content
-router.get('/landing-builder', getLandingPageConfig);
-router.post('/landing-builder', saveLandingPageConfig);
-router.get('/custom-pages', getCustomPages);
-router.post('/custom-pages', createCustomPage);
-router.put('/custom-pages/:id', updateCustomPage);
-router.delete('/custom-pages/:id', deleteCustomPage);
-router.get('/subscribers', getSubscribers);
-router.put('/subscribers/:id', updateSubscriberStatus);
-router.delete('/subscribers/:id', deleteSubscriber);
-router.get('/contacts', getContactInquiries);
-router.delete('/contacts/:id', deleteContactInquiry);
 
 // Templates
 router.get('/templates/email', getEmailTemplates);

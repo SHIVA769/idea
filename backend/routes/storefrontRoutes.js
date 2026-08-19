@@ -25,6 +25,7 @@ router.post('/contact/inquiry', submitContactInquiryPublic);
 // Public Storefront Endpoints
 router.get('/:slug', getStoreBySlug);
 router.get('/:slug/catalog', getStoreCatalog);
+router.get('/:slug/products', getStoreCatalog);
 router.get('/:slug/products/:productId', getProductQuickView);
 router.post('/:slug/coupon/apply', applyCoupon);
 router.get('/:slug/shipping-methods', getStoreShippingMethods);

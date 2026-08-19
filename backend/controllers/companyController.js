@@ -14,6 +14,7 @@ import { sendSuccess, sendError } from '../utils/response.js';
 import { encryptSecret, maskSecret } from '../utils/crypto.js';
 import { generateOrderInvoicePDF } from '../services/pdfInvoiceService.js';
 import { dispatchWebhook } from '../services/webhookService.js';
+import { sendEmail } from '../services/mailer.js';
 import { ROLES, PERMISSION_MODULES, STORE_THEMES } from '../config/constants.js';
 
 // Helper to extract effective companyId
@@ -127,7 +128,7 @@ export const createStore = async (req, res) => {
       slug: generatedSlug,
       description,
       email,
-      theme: theme || 'theme-home-decor',
+      theme: theme || 'theme-whatsapp-store',
       domainConfig: domainConfig || {},
       pwaConfig: pwaConfig || {},
       welcomeMessage: welcomeMessage || 'Welcome to our store! Discover premium products & order instantly via WhatsApp.',
@@ -244,6 +245,7 @@ export const createProduct = async (req, res) => {
       categoryId,
       taxId,
       coverImage,
+      thumbnail,
       images,
       isDisplay = true,
       price,
@@ -256,13 +258,20 @@ export const createProduct = async (req, res) => {
       details,
       variants,
       customFields,
+      status,
     } = req.body;
 
-    if (!storeId || !name || !sku || price === undefined || stockQuantity === undefined) {
-      return sendError(res, 'Store, Name, SKU, Price, and Stock Quantity are required.', 400);
+    const store = await Store.findOne({ _id: storeId, companyId });
+    if (!storeId || !store) {
+      return sendError(res, 'A valid store is required before creating a product.', 400);
+    }
+
+    if (!name || !sku || price === undefined || stockQuantity === undefined) {
+      return sendError(res, 'Name, SKU, Price, and Stock Quantity are required.', 400);
     }
 
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + `-${Date.now().toString(36)}`;
+    const imageUrl = coverImage || thumbnail || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800';
 
     const product = await Product.create({
       companyId,
@@ -272,7 +281,7 @@ export const createProduct = async (req, res) => {
       sku,
       categoryId: categoryId || null,
       taxId: taxId || null,
-      coverImage: coverImage || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800',
+      coverImage: imageUrl,
       images: images || [],
       isDisplay,
       price: Number(price),
@@ -285,7 +294,7 @@ export const createProduct = async (req, res) => {
       details: details || '',
       variants: variants || [],
       customFields: customFields || [],
-      status: 'active',
+      status: status || 'active',
     });
 
     dispatchWebhook({
@@ -306,7 +315,20 @@ export const updateProduct = async (req, res) => {
     const companyId = getCompanyId(req);
     const { id } = req.params;
 
-    const product = await Product.findOneAndUpdate({ _id: id, companyId }, req.body, { new: true });
+    const updates = { ...req.body };
+    if (updates.storeId) {
+      const store = await Store.findOne({ _id: updates.storeId, companyId });
+      if (!store) {
+        return sendError(res, 'Selected store does not belong to this merchant.', 400);
+      }
+    }
+
+    if (updates.thumbnail && !updates.coverImage) {
+      updates.coverImage = updates.thumbnail;
+    }
+    delete updates.thumbnail;
+
+    const product = await Product.findOneAndUpdate({ _id: id, companyId }, updates, { new: true });
     if (!product) return sendError(res, 'Product not found.', 404);
 
     return sendSuccess(res, product, 'Product updated successfully.');
@@ -1349,28 +1371,127 @@ export const getCompanySettings = async (req, res) => {
   }
 };
 
+export const getCompanyMessagingSettings = async (req, res) => {
+  try {
+    const companyId = getCompanyId(req);
+    let messaging = await CompanyMessagingSettings.findOne({ companyId });
+    if (!messaging) {
+      messaging = await CompanyMessagingSettings.create({ companyId });
+    }
+
+    const webhook = await WebhookConfig.findOne({ companyId, module: 'orders' }) || await WebhookConfig.findOne({ companyId });
+
+    return sendSuccess(res, {
+      whatsappTemplate: messaging.whatsappTemplate || messaging.messageTemplate || '',
+      telegramTemplate: messaging.telegramTemplate || '',
+      twilio: {
+        enabled: !!messaging.twilioEnabled,
+        accountSid: messaging.twilioSid || '',
+        authToken: messaging.twilioAuthToken ? maskSecret(messaging.twilioAuthToken) : '',
+        fromPhone: messaging.twilioFromNumber || '',
+      },
+      telegramBot: {
+        enabled: !!messaging.telegramEnabled,
+        botToken: messaging.telegramBotToken ? maskSecret(messaging.telegramBotToken) : '',
+        chatId: messaging.telegramChatId || '',
+      },
+      webhook: {
+        enabled: webhook ? webhook.isActive : false,
+        url: webhook ? webhook.url : '',
+        secretKey: webhook ? (webhook.secret ? maskSecret(webhook.secret) : '') : '',
+      },
+    });
+  } catch (error) {
+    return sendError(res, error.message, 500);
+  }
+};
+
 export const updateCompanyMessagingSettings = async (req, res) => {
   try {
     const companyId = getCompanyId(req);
     let messaging = await CompanyMessagingSettings.findOne({ companyId });
     if (!messaging) messaging = new CompanyMessagingSettings({ companyId });
 
-    if (req.body.twilioAuthToken && !req.body.twilioAuthToken.includes('****')) {
-      req.body.twilioAuthToken = encryptSecret(req.body.twilioAuthToken);
-    } else {
-      delete req.body.twilioAuthToken;
+    const {
+      whatsappTemplate,
+      telegramTemplate,
+      twilio,
+      telegramBot,
+      webhook,
+    } = req.body;
+
+    if (whatsappTemplate !== undefined) {
+      messaging.whatsappTemplate = whatsappTemplate;
+      messaging.messageTemplate = whatsappTemplate;
+    }
+    if (telegramTemplate !== undefined) {
+      messaging.telegramTemplate = telegramTemplate;
     }
 
+    if (twilio) {
+      if (twilio.enabled !== undefined) messaging.twilioEnabled = twilio.enabled;
+      if (twilio.accountSid !== undefined) messaging.twilioSid = twilio.accountSid;
+      if (twilio.authToken && !twilio.authToken.includes('****')) {
+        messaging.twilioAuthToken = encryptSecret(twilio.authToken);
+      }
+      if (twilio.fromPhone !== undefined) messaging.twilioFromNumber = twilio.fromPhone;
+    }
+
+    if (telegramBot) {
+      if (telegramBot.enabled !== undefined) messaging.telegramEnabled = telegramBot.enabled;
+      if (telegramBot.botToken && !telegramBot.botToken.includes('****')) {
+        messaging.telegramBotToken = encryptSecret(telegramBot.botToken);
+      }
+      if (telegramBot.chatId !== undefined) messaging.telegramChatId = telegramBot.chatId;
+    }
+
+    // Direct field overrides if flat structure sent
+    if (req.body.twilioAuthToken && !req.body.twilioAuthToken.includes('****')) {
+      messaging.twilioAuthToken = encryptSecret(req.body.twilioAuthToken);
+    }
     if (req.body.telegramBotToken && !req.body.telegramBotToken.includes('****')) {
-      req.body.telegramBotToken = encryptSecret(req.body.telegramBotToken);
-    } else {
-      delete req.body.telegramBotToken;
+      messaging.telegramBotToken = encryptSecret(req.body.telegramBotToken);
     }
 
     Object.assign(messaging, req.body);
     await messaging.save();
 
+    if (webhook && webhook.url) {
+      let wh = await WebhookConfig.findOne({ companyId, module: 'orders' });
+      if (!wh) {
+        wh = new WebhookConfig({ companyId, module: 'orders' });
+      }
+      wh.url = webhook.url;
+      wh.isActive = webhook.enabled !== undefined ? webhook.enabled : true;
+      if (webhook.secretKey && !webhook.secretKey.includes('****')) {
+        wh.secret = webhook.secretKey;
+      }
+      await wh.save();
+    }
+
     return sendSuccess(res, messaging, 'Messaging & Notification settings updated.');
+  } catch (error) {
+    return sendError(res, error.message, 500);
+  }
+};
+
+export const sendCompanyTemplateEmail = async (req, res) => {
+  try {
+    const companyId = getCompanyId(req);
+    const { to, message } = req.body;
+
+    if (!to || !message) return sendError(res, 'Recipient email and message are required.', 400);
+
+    const result = await sendEmail({
+      companyId,
+      to,
+      subject: 'WhatsStore message template preview',
+      text: message,
+      html: `<pre style="font-family:Arial,sans-serif;white-space:pre-wrap">${message.replace(/[&<>]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[char]))}</pre>`,
+    });
+
+    if (!result.success) return sendError(res, result.error || 'Failed to send test email.', 500);
+    return sendSuccess(res, null, `Test email sent to ${to}.`);
   } catch (error) {
     return sendError(res, error.message, 500);
   }

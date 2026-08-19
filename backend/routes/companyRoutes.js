@@ -48,7 +48,9 @@ import {
   getCompanyReferralData,
   requestPayout,
   getCompanySettings,
+  getCompanyMessagingSettings,
   updateCompanyMessagingSettings,
+  sendCompanyTemplateEmail,
   createWebhook,
   deleteWebhook,
 } from '../controllers/companyController.js';
@@ -135,9 +137,13 @@ router.post('/plans/subscribe', requirePermission('plans.subscribe'), subscribeP
 router.get('/referrals', requirePermission('referral.view'), getCompanyReferralData);
 router.post('/referrals/payout', requirePermission('referral.request_payout'), requestPayout);
 
-// Settings
+// Settings & Messaging
 router.get('/settings', requirePermission('settings.view'), getCompanySettings);
+router.get('/settings/messaging', requirePermission('settings.view'), getCompanyMessagingSettings);
 router.put('/settings/messaging', requirePermission('settings.edit'), updateCompanyMessagingSettings);
+router.get('/messaging-settings', requirePermission('settings.view'), getCompanyMessagingSettings);
+router.put('/messaging-settings', requirePermission('settings.edit'), updateCompanyMessagingSettings);
+router.post('/messaging-settings/test-email', requirePermission('settings.edit'), sendCompanyTemplateEmail);
 router.post('/webhooks', requirePermission('webhooks.create'), createWebhook);
 router.delete('/webhooks/:id', requirePermission('webhooks.delete'), deleteWebhook);
 
