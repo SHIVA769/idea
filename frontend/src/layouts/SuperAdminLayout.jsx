@@ -65,7 +65,7 @@ export const SuperAdminLayout = () => {
         {/* Brand Header */}
         <div className="h-16 px-6 flex items-center justify-between border-b border-slate-800">
           <Link to="/admin" className="flex items-center space-x-2.5">
-            <BrandLogo className="h-10 w-10 rounded-xl shadow-md" />
+            <BrandLogo className="h-12 w-12 rounded-xl shadow-md" />
             <div>
               <span className="font-extrabold tracking-tight text-white text-base">WhatsStore</span>
               <span className="block text-[10px] font-semibold tracking-wider text-sky-400 uppercase">Super Admin</span>

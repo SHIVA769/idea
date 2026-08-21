@@ -11,7 +11,7 @@ export const AuthLayout = () => {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10">
         <Link to="/" className="inline-flex items-center space-x-2.5 mb-4">
-          <BrandLogo className="h-12 w-12 rounded-2xl shadow-lg" />
+          <BrandLogo className="h-14 w-14 rounded-2xl shadow-lg" />
           <span className="text-2xl font-black tracking-tight text-white">WhatsStore</span>
         </Link>
         <p className="text-xs font-medium text-slate-400">
