@@ -43,8 +43,8 @@ export const StorefrontHome = () => {
 
     let isMounted = true;
 
-    const fetchCatalog = async (silent = false) => {
-      if (!silent) setLoading(true);
+    const fetchCatalog = async () => {
+      setLoading(true);
       try {
         const res = await api.get(`/storefront/${slug}/products`, {
           params: {
@@ -59,21 +59,14 @@ export const StorefrontHome = () => {
       } catch (err) {
         console.error('Failed to load store catalog:', err);
       } finally {
-        if (isMounted && !silent) setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchCatalog();
 
-    const interval = setInterval(() => fetchCatalog(true), 15000);
-
-    const onFocus = () => fetchCatalog(true);
-    window.addEventListener('focus', onFocus);
-
     return () => {
       isMounted = false;
-      clearInterval(interval);
-      window.removeEventListener('focus', onFocus);
     };
   }, [slug, selectedCategory, searchQuery]);
 

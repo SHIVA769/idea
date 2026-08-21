@@ -25,19 +25,23 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const reactivateDemoAccounts = async () => {
+const ensureDemoAccounts = async () => {
   try {
-    const result = await User.updateMany(
-      {
-        email: { $in: ['admin@whatsstore.io', 'owner@luxeretail.com'] },
-        status: { $in: ['inactive', 'disabled'] },
-      },
-      { $set: { status: 'active' } }
-    );
+    const demoAccounts = [
+      { email: 'admin@whatsstore.io', password: 'admin123' },
+      { email: 'owner@luxeretail.com', password: 'owner123' },
+    ];
 
-    if (result.modifiedCount > 0) {
-      console.log(`[Init] Reactivated ${result.modifiedCount} stale demo account(s).`);
+    for (const account of demoAccounts) {
+      const user = await User.findOne({ email: account.email });
+      if (!user) continue;
+
+      user.password = account.password;
+      user.status = 'active';
+      await user.save();
     }
+
+    console.log('[Init] Demo account credentials synchronized.');
   } catch (e) {
     console.error('[Init Demo Restore Error]', e.message);
   }
@@ -52,7 +56,7 @@ connectDB().then(async (conn) => {
         console.log('[Init] No users found. Running initial database seed...');
         await seedDatabase();
       } else {
-        await reactivateDemoAccounts();
+        await ensureDemoAccounts();
       }
     } catch (e) {
       console.error('[Init Seed Error]', e.message);

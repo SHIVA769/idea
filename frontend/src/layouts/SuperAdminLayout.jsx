@@ -23,6 +23,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { BrandLogo } from '../components/common/BrandLogo';
 
 export const SuperAdminLayout = () => {
   const { user, logout } = useAuth();
@@ -64,9 +65,7 @@ export const SuperAdminLayout = () => {
         {/* Brand Header */}
         <div className="h-16 px-6 flex items-center justify-between border-b border-slate-800">
           <Link to="/admin" className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-black text-white shadow-md">
-              WS
-            </div>
+            <BrandLogo className="h-10 w-10 rounded-xl shadow-md" />
             <div>
               <span className="font-extrabold tracking-tight text-white text-base">WhatsStore</span>
               <span className="block text-[10px] font-semibold tracking-wider text-sky-400 uppercase">Super Admin</span>

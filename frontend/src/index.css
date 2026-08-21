@@ -94,3 +94,68 @@
   --bg-page: #ffffff;
   --font-heading: 'Inter', sans-serif;
 }
+
+@layer components {
+  .landing-page { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; }
+  .landing-shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+  .landing-header { position: relative; z-index: 20; border-bottom: 1px solid #e5f1e9; background: rgba(255, 255, 255, .92); }
+  .landing-logo { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 13px; background: #10b981; color: white; font-size: 13px; font-weight: 900; box-shadow: 0 7px 18px rgba(16, 185, 129, .22); }
+  .landing-nav a { color: #577166; font-size: 12px; font-weight: 700; transition: color .2s ease; }
+  .landing-nav a:hover { color: #089669; }
+  .landing-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 48px; padding: 0 22px; border-radius: 10px; background: #069b65; color: white; font-size: 12px; font-weight: 800; box-shadow: 0 12px 22px rgba(6, 155, 101, .18); transition: transform .2s ease, background .2s ease; }
+  .landing-button:hover { background: #057d53; transform: translateY(-2px); }
+  .landing-button-small { min-height: 38px; padding: 0 17px; }
+  .landing-button-quiet { border: 1px solid #d9e8de; background: white; color: #315644; box-shadow: none; }
+  .landing-button-quiet:hover { background: #f1faf4; color: #087d55; }
+  .landing-hero { position: relative; padding: 86px 0 76px; background: radial-gradient(circle at 72% 45%, #e8faed 0, #f9fdf9 34%, #fbfffc 68%); }
+  .landing-kicker { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 19px; color: #0a9d68; font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+  .landing-hero h1 { margin: 0; color: #123c2b; font-size: clamp(42px, 5.2vw, 68px); font-weight: 900; letter-spacing: -.07em; line-height: 1.05; }
+  .landing-hero h1 span { color: #0aa76d; }
+  .landing-lede { max-width: 470px; margin-top: 22px; color: #688174; font-size: 15px; line-height: 1.8; }
+  .landing-visual { position: relative; min-height: 430px; }
+  .landing-sun { position: absolute; right: 8%; top: 2%; width: 340px; height: 340px; border-radius: 50%; background: #d9f6e1; }
+  .store-preview { position: absolute; z-index: 1; right: 2%; top: 50px; width: min(580px, 88%); overflow: hidden; border: 7px solid white; border-radius: 8px; background: white; box-shadow: 0 25px 50px rgba(26, 104, 65, .15); transform: rotate(-2deg); }
+  .store-topbar { display: flex; align-items: center; justify-content: space-between; height: 37px; padding: 0 16px; }
+  .store-mark { color: #108347; font-size: 14px; font-weight: 900; letter-spacing: -.08em; }
+  .store-dot { width: 10px; height: 10px; border-radius: 50%; background: #d9f3df; }
+  .store-copy { position: absolute; z-index: 2; left: 9%; top: 24%; max-width: 185px; }
+  .store-copy small { color: #128149; font-size: 7px; font-weight: 900; letter-spacing: .1em; }
+  .store-copy strong { display: block; margin: 7px 0; color: #114d32; font-size: 28px; font-weight: 900; letter-spacing: -.07em; line-height: .98; }
+  .store-copy p { color: #62806d; font-size: 7px; line-height: 1.5; }
+  .store-copy button { display: flex; align-items: center; gap: 4px; margin-top: 11px; border: 0; border-radius: 4px; padding: 7px 9px; background: #088d58; color: white; font-size: 7px; font-weight: 800; }
+  .store-copy button svg { width: 9px; }
+  .store-preview > img { display: block; width: 100%; height: 340px; object-fit: cover; object-position: center; opacity: .42; }
+  .store-chips { display: flex; justify-content: center; gap: 6px; padding: 9px; color: #42805b; font-size: 7px; font-weight: 700; }
+  .store-chips span { padding: 4px 7px; border-radius: 20px; background: #eefaf0; }
+  .phone-preview { position: absolute; z-index: 3; right: -3%; bottom: 12px; width: 145px; padding: 8px; border: 4px solid #173c2c; border-radius: 25px; background: #173c2c; box-shadow: 0 18px 35px rgba(20, 60, 43, .27); transform: rotate(7deg); }
+  .phone-notch { width: 48px; height: 9px; margin: -2px auto 5px; border-radius: 0 0 8px 8px; background: #173c2c; }
+  .phone-screen { position: relative; overflow: hidden; height: 270px; border-radius: 15px; background: #fff; }
+  .phone-header { display: flex; justify-content: space-between; padding: 11px 10px; color: #11834f; font-size: 10px; font-weight: 900; }
+  .phone-header svg { width: 13px; }
+  .phone-banner { display: flex; align-items: end; justify-content: space-between; height: 94px; padding: 13px 10px; background: linear-gradient(135deg, #d8f3db, #75c98b); color: #205738; }
+  .phone-banner b { font-size: 15px; line-height: .95; letter-spacing: -.06em; }
+  .phone-banner span { padding: 4px 6px; border-radius: 4px; background: white; font-size: 7px; font-weight: 800; }
+  .phone-label { padding: 12px 10px 6px; color: #234f36; font-size: 9px; font-weight: 900; }
+  .phone-products { display: flex; gap: 5px; padding: 0 10px; }
+  .phone-products i { display: block; width: 36px; height: 38px; border-radius: 4px; background: linear-gradient(145deg, #e3f3e1, #a5d2a4); }
+  .phone-whatsapp { position: absolute; right: 10px; bottom: 10px; display: grid; place-items: center; width: 29px; height: 29px; border-radius: 50%; background: #25d366; color: white; }
+  .phone-whatsapp svg { width: 16px; }
+  .landing-features { padding: 60px 0 66px; background: #f0faf2; border-top: 1px solid #e1f0e4; }
+  .section-heading { text-align: center; }
+  .section-heading > span { color: #119259; font-size: 9px; font-weight: 900; letter-spacing: .12em; }
+  .section-heading h2 { margin: 9px 0 5px; color: #173e2d; font-size: clamp(26px, 3vw, 36px); font-weight: 900; letter-spacing: -.06em; }
+  .section-heading p { color: #719080; font-size: 12px; }
+  .feature-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 22px; margin-top: 38px; }
+  .feature-item { text-align: center; }
+  .feature-icon { display: grid; place-items: center; width: 39px; height: 39px; margin: 0 auto 12px; border-radius: 10px; background: #d9f4df; color: #07935e; }
+  .feature-icon svg { width: 19px; }
+  .feature-item strong, .steps-row strong { display: block; color: #285440; font-size: 11px; font-weight: 900; }
+  .feature-item p, .steps-row p { margin-top: 6px; color: #779184; font-size: 10px; line-height: 1.55; }
+  .landing-steps { padding: 70px 0; background: white; }
+  .steps-row { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 780px; margin: 37px auto 0; text-align: center; }
+  .steps-row > div { position: relative; padding: 0 30px; }
+  .steps-row > div:not(:last-child)::after { content: ''; position: absolute; top: 21px; right: -5%; width: 30%; border-top: 1px dashed #a9d9b6; }
+  .steps-row b { display: grid; place-items: center; width: 42px; height: 42px; margin: 0 auto 12px; border: 1px solid #bce8c8; border-radius: 50%; background: #f0fbf2; color: #07935e; font-size: 15px; }
+  .landing-footer { padding: 24px; border-top: 1px solid #e5f1e9; color: #789186; text-align: center; font-size: 11px; }
+  @media (max-width: 767px) { .landing-shell { width: min(100% - 28px, 600px); } .landing-hero { padding: 54px 0 50px; } .landing-visual { min-height: 340px; margin-top: 10px; } .store-preview { top: 34px; width: 90%; } .store-preview > img { height: 260px; } .phone-preview { right: -1%; bottom: 0; width: 112px; } .phone-screen { height: 210px; } .phone-banner { height: 70px; } .phone-banner b { font-size: 11px; } .feature-row { grid-template-columns: repeat(2, 1fr); gap: 30px 12px; } .feature-item:last-child { grid-column: 1 / -1; max-width: 160px; margin: auto; } .steps-row { grid-template-columns: 1fr; gap: 30px; } .steps-row > div:not(:last-child)::after { top: auto; right: auto; bottom: -20px; left: calc(50% - 12px); width: 24px; transform: rotate(90deg); } }
+}

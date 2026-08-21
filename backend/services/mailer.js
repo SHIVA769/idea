@@ -1,169 +1,108 @@
+import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
-import { EmailSettings } from '../models/Settings.js';
-import { decryptSecret } from '../utils/crypto.js';
 
-/**
- * Build the transporter configuration object and sender info.
- * Prioritizes company-specific/super-admin DB settings if configured with host & credentials,
- * otherwise falls back to environment variables (.env).
- */
-export const getTransporterConfig = async (companyId = null) => {
-  let settings = null;
-  try {
-    settings = (await EmailSettings.findOne({ companyId })) || (await EmailSettings.findOne({ companyId: null }));
-  } catch {
-    // Database might be connecting or unavailable during early startup check
-  }
+const hasSmtpConfig = () => Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 
-  let fromAddress = process.env.SMTP_FROM_ADDRESS || process.env.SMTP_USER || 'noreply@whatsstore.io';
-  let fromName = process.env.SMTP_FROM_NAME || 'WhatsStore SaaS';
+const getSmtpTransport = () => nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT || 465),
+  secure: String(process.env.SMTP_SECURE || 'true') === 'true',
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
-  // 1. Prefer database settings if valid host, username, and password exist
-  if (settings && settings.host && settings.username && settings.password) {
-    try {
-      const decryptedPassword = decryptSecret(settings.password);
-      if (decryptedPassword && decryptedPassword.trim()) {
-        fromAddress = settings.fromAddress || fromAddress;
-        fromName = settings.fromName || fromName;
-        const port = Number(settings.port) || 587;
-        // Port 465 uses direct SSL (secure: true); Port 587 uses STARTTLS (secure: false)
-        const isSecure = settings.encryption === 'ssl' || port === 465;
-
-        return {
-          transporterConfig: {
-            host: settings.host,
-            port,
-            secure: isSecure,
-            auth: {
-              user: settings.username,
-              pass: decryptedPassword,
-            },
-            tls: {
-              rejectUnauthorized: process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== 'false',
-            },
-          },
-          from: `"${fromName}" <${fromAddress}>`,
-          source: 'database',
-        };
-      }
-    } catch {
-      // Decryption failed or invalid secret, gracefully fall back to .env
-    }
-  }
-
-  // 2. Fallback to .env configuration
-  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-    const port = Number(process.env.SMTP_PORT) || 587;
-    // Port 587 uses STARTTLS (secure: false); Port 465 uses SSL/TLS (secure: true)
-    const isSecure = process.env.SMTP_SECURE === 'true' || port === 465;
-
-    return {
-      transporterConfig: {
-        host: process.env.SMTP_HOST,
-        port,
-        secure: isSecure,
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-        tls: {
-          rejectUnauthorized: process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== 'false',
-        },
-      },
-      from: `"${fromName}" <${fromAddress}>`,
-      source: 'env',
-    };
-  }
-
-  return null;
+const getResendClient = () => {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+  return new Resend(apiKey);
 };
 
 /**
- * Verify SMTP connection at server startup.
- * Logs success or detailed actionable error diagnostics.
+ * Verify Email Service at server startup.
  */
 export const verifySMTPConnection = async () => {
   try {
-    const config = await getTransporterConfig();
-    if (!config) {
-      console.log('[Mailer Startup] ℹ️  SMTP is not configured in .env or database. Email sending will be inactive.');
+    if (hasSmtpConfig()) {
+      await getSmtpTransport().verify();
+      console.log('=============================================');
+      console.log('[Email Service] SMTP configured and connection verified!');
+      console.log(`  Provider: ${process.env.SMTP_HOST}`);
+      console.log(`  From:     ${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}`);
+      console.log('=============================================');
+      return true;
+    }
+
+    const resend = getResendClient();
+    if (!resend) {
+      console.log('[Email Service] ℹ️  RESEND_API_KEY is not configured in .env. Email sending will be inactive.');
       return false;
     }
 
-    const { host, port, secure, auth } = config.transporterConfig;
-    const transporter = nodemailer.createTransport(config.transporterConfig);
-
-    await transporter.verify();
-
+    const fromAddress = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
     console.log(`=============================================`);
-    console.log(`[Mailer] ✅ SMTP Connection verified successfully!`);
-    console.log(`  Host:   ${host}:${port} (secure: ${secure})`);
-    console.log(`  User:   ${auth.user}`);
-    console.log(`  From:   ${config.from}`);
-    console.log(`  Source: ${config.source}`);
+    console.log(`[Email Service] ✅ Resend API configured and active!`);
+    console.log(`  Provider: Resend (https://resend.com)`);
+    console.log(`  From:     ${fromAddress}`);
     console.log(`=============================================`);
     return true;
   } catch (error) {
-    console.error(`=============================================`);
-    console.error(`[Mailer Startup Error] ❌ SMTP verification failed:`);
-    console.error(`  Error Message: ${error.message}`);
-    if (error.code) console.error(`  Error Code:    ${error.code}`);
-    if (error.responseCode) console.error(`  Response Code: ${error.responseCode}`);
-    if (error.response) console.error(`  SMTP Response: ${error.response}`);
-    if (error.command) console.error(`  SMTP Command:  ${error.command}`);
-
-    if (error.responseCode === 535 || /invalid credentials|535/i.test(error.message)) {
-      console.error(`---------------------------------------------`);
-      console.error(`[Mailer Diagnostic: Gmail 535 Authentication Fix]`);
-      console.error(`  1. Make sure 2-Step Verification is enabled on your Google Account.`);
-      console.error(`  2. Generate a 16-character App Password at: https://myaccount.google.com/apppasswords`);
-      console.error(`  3. Paste the 16-character App Password into SMTP_PASS (WITHOUT any spaces).`);
-      console.error(`  4. Do NOT use your regular Gmail password.`);
-      console.error(`  5. If you see "Too many failed login attempts", wait 15-30 mins for Google rate-limit to clear.`);
-      console.error(`---------------------------------------------`);
-    }
-    console.error(`=============================================`);
+    console.error(`[Email Service Error] ❌ Provider initialization failed:`, error.message);
     return false;
   }
 };
 
 /**
- * Send an email using Nodemailer.
+ * Send an email using Resend API.
  */
-export const sendEmail = async ({ to, subject, html, text, companyId = null }) => {
+export const sendEmail = async ({ to, subject, html, text }) => {
   try {
-    const config = await getTransporterConfig(companyId);
-    if (!config) {
-      console.warn(`[Mailer] Cannot send email to ${to}: SMTP is not configured in .env or database.`);
-      return { success: false, error: 'SMTP is not configured. Add valid SMTP settings in .env or Super Admin > Settings > Email (SMTP).' };
+    if (hasSmtpConfig()) {
+      const recipient = Array.isArray(to) ? to : [to];
+      const info = await getSmtpTransport().sendMail({
+        from: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER,
+        to: recipient,
+        subject,
+        html: html || `<p>${text || ''}</p>`,
+        text: text || (html ? html.replace(/<[^>]+>/g, '') : ''),
+      });
+
+      console.log(`[Email Service] Email dispatched via SMTP to ${recipient.join(', ')} (${info.messageId})`);
+      return { success: true, messageId: info.messageId };
     }
 
-    const transporter = nodemailer.createTransport(config.transporterConfig);
-    const info = await transporter.sendMail({
-      from: config.from,
-      to,
+    const resend = getResendClient();
+    if (!resend) {
+      console.warn(`[Email Service] Cannot send email to ${to}: RESEND_API_KEY is not set in .env.`);
+      return { success: false, error: 'Email service is not configured. Please set RESEND_API_KEY in .env.' };
+    }
+
+    const from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+    const recipient = Array.isArray(to) ? to : [to];
+
+    const { data, error } = await resend.emails.send({
+      from,
+      to: recipient,
       subject,
+      html: html || `<p>${text || ''}</p>`,
       text: text || (html ? html.replace(/<[^>]+>/g, '') : ''),
-      html,
     });
 
-    console.log(`[Mailer] ✉️  Email dispatched to ${to} (MessageID: ${info.messageId})`);
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error(`[Mailer Error] Failed to send email to ${to}:`);
-    console.error(`  Message:       ${error.message}`);
-    if (error.code) console.error(`  Code:          ${error.code}`);
-    if (error.responseCode) console.error(`  Response Code: ${error.responseCode}`);
-    if (error.response) console.error(`  SMTP Response: ${error.response}`);
-    if (error.command) console.error(`  Command:       ${error.command}`);
-
-    if (error.responseCode === 535 || /authentication failed|invalid login|535/i.test(error.message)) {
+    if (error) {
+      console.error(`[Email Service Error] Failed to send email to ${recipient.join(', ')}:`, error);
       return {
         success: false,
-        error: `SMTP authentication failed (535: Invalid credentials). Ensure you are using a 16-character Google App Password (without spaces) and not your personal Gmail password.`,
-        details: error.response || error.message,
+        error: error.message || 'Resend email dispatch error',
+        details: error,
       };
     }
-    return { success: false, error: error.message, details: error.response || null };
+
+    console.log(`[Email Service] ✉️  Email dispatched via Resend to ${recipient.join(', ')} (ID: ${data?.id})`);
+    return { success: true, messageId: data?.id };
+  } catch (error) {
+    console.error(`[Email Service Error] Unexpected error sending email to ${to}:`, error.message);
+    return { success: false, error: error.message };
   }
 };
+

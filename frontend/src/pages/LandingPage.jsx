@@ -1,32 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Sparkles,
-  ShoppingBag,
-  Store,
   ArrowRight,
-  ShieldCheck,
-  Zap,
-  Globe,
+  Check,
+  CirclePlay,
+  Menu,
   MessageCircle,
-  BarChart2,
-  Layers,
-  CheckCircle2,
+  PackageCheck,
+  QrCode,
+  ShoppingBag,
+  Smartphone,
+  X,
 } from 'lucide-react';
 import api from '../api/axios';
+import { BrandLogo } from '../components/common/BrandLogo';
+
+const featureItems = [
+  { icon: PackageCheck, title: 'Easy Setup', text: 'Create your store in just a few minutes.' },
+  { icon: MessageCircle, title: 'No Commissions', text: 'Keep more of what you earn with every order.' },
+  { icon: Smartphone, title: 'WhatsApp Integrated', text: 'Sell where your customers already chat.' },
+  { icon: ShoppingBag, title: 'Carts & Orders', text: 'Make buying simple from first click to checkout.' },
+  { icon: QrCode, title: 'Secure & Reliable', text: 'A fast, trusted storefront for your business.' },
+];
+
+const showcaseImage = 'https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=1200&auto=format&fit=crop&q=85';
 
 export const LandingPage = () => {
   const [landingData, setLandingData] = useState(null);
-  const [plans, setPlans] = useState([]);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchLanding = async () => {
       try {
         const res = await api.get('/storefront/landing');
-        if (res.data?.success) {
-          setLandingData(res.data.data.landing);
-          setPlans(res.data.data.plans || []);
-        }
+        if (res.data?.success) setLandingData(res.data.data.landing);
       } catch (err) {
         console.error('Failed to load landing data:', err);
       }
@@ -34,118 +41,36 @@ export const LandingPage = () => {
     fetchLanding();
   }, []);
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-emerald-500 selection:text-white">
-      {/* Header Bar */}
-      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 via-emerald-500 to-teal-400 flex items-center justify-center font-black text-white text-lg shadow-lg">
-              WS
-            </div>
-            <span className="text-xl font-black tracking-tight text-white">WhatsStore</span>
-          </Link>
+  const companyName = landingData?.setup?.companyName || 'WhatsStore';
 
-          <div className="flex items-center space-x-4">
-            <Link
-              to="/login"
-              className="text-xs font-bold text-slate-300 hover:text-white px-3 py-2 transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/register"
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white text-xs font-extrabold shadow-lg shadow-emerald-900/30 transition-all transform active:scale-95"
-            >
-              Start Free Trial
-            </Link>
-          </div>
+  return (
+    <div className="landing-page min-h-screen overflow-hidden bg-[#fbfffc] text-[#12372b]">
+      <header className="landing-header">
+        <div className="landing-shell flex h-[76px] items-center justify-between">
+          <Link to="/" className="flex items-center gap-2.5" aria-label="WhatsStore home">
+            <BrandLogo className="h-11 w-11 rounded-xl" />
+            <span className="text-[19px] font-extrabold tracking-[-0.04em] text-[#133d2c]">{companyName.replace(' SaaS', '')}</span>
+          </Link>
+          <nav className={`${menuOpen ? 'flex' : 'hidden'} landing-nav absolute left-4 right-4 top-[68px] flex-col gap-4 rounded-2xl bg-white p-5 shadow-xl md:static md:flex md:flex-row md:items-center md:gap-7 md:bg-transparent md:p-0 md:shadow-none`}>
+            <a href="#features">Features</a><a href="#how-it-works">How It Works</a><a href="#themes">Categories</a><a href="#pricing">Pricing</a><a href="#contact">Contact</a>
+          </nav>
+          <div className="hidden items-center gap-5 md:flex"><Link to="/login" className="text-sm font-bold text-[#173c2d] hover:text-[#0aa76d]">Login</Link><Link to="/register" className="landing-button landing-button-small">Get Started <ArrowRight className="h-4 w-4" /></Link></div>
+          <button type="button" onClick={() => setMenuOpen(!menuOpen)} className="md:hidden" aria-label="Toggle navigation">{menuOpen ? <X /> : <Menu />}</button>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-24 overflow-hidden text-center">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none" />
-
-        <div className="max-w-4xl mx-auto px-4 space-y-6 relative z-10">
-          <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs font-extrabold text-emerald-400">
-            <Sparkles className="w-4 h-4" />
-            <span>Next-Generation WhatsApp E-Commerce SaaS</span>
+      <main>
+        <section className="landing-hero">
+          <div className="landing-shell grid items-center gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:gap-8">
+            <div className="relative z-10 max-w-xl"><div className="landing-kicker"><span className="h-2 w-2 rounded-full bg-[#0aa76d]" /> WhatsApp Commerce Made Simple</div><h1>Sell on WhatsApp.<br /><span>Grow Your Business.</span></h1><p className="landing-lede">Create your online store and start taking orders on WhatsApp in just a few minutes. No coding, no hassle.</p><div className="mt-8 flex flex-col gap-3 sm:flex-row"><Link to="/register" className="landing-button">Start Your Store Now <ArrowRight className="h-4 w-4" /></Link><a href="#how-it-works" className="landing-button landing-button-quiet"><CirclePlay className="h-4 w-4" /> How It Works</a></div><div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-[#587268]"><span><Check /> Free to get started</span><span><Check /> No credit card required</span></div></div>
+            <div className="landing-visual" aria-label="WhatsStore storefront preview"><div className="landing-sun" /><div className="store-preview"><div className="store-topbar"><span className="store-mark">waply</span><div className="hidden gap-4 text-[7px] font-bold text-[#326b4d] sm:flex"><span>Home</span><span>Features</span><span>How It Works</span><span>Pricing</span></div><span className="store-dot" /></div><div className="store-copy"><small>SELL ON WHATSAPP</small><strong>Grow your<br />business.</strong><p>Everything you need to sell online and start taking orders.</p><button type="button">Start Selling Now <ArrowRight /></button></div><img src={showcaseImage} alt="Online store products" /><div className="store-chips"><span>New collection</span><span>Fast checkout</span><span>WhatsApp orders</span></div></div><div className="phone-preview"><div className="phone-notch" /><div className="phone-screen"><div className="phone-header"><span>waply</span><ShoppingBag /></div><div className="phone-banner"><b>SUMMER<br />COLLECTION</b><span>Shop now</span></div><div className="phone-label">Top Products</div><div className="phone-products"><i /><i /><i /></div><div className="phone-whatsapp"><MessageCircle /></div></div></div></div>
           </div>
+        </section>
 
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight text-white">
-            Build High-Converting <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-sky-400 bg-clip-text text-transparent">WhatsApp Stores</span> in Seconds
-          </h1>
-
-          <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Turn your social traffic into instant WhatsApp orders. Multi-theme design systems, 3-step checkout wizard, automated messaging, and powerful store management.
-          </p>
-
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              to="/register"
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-extrabold text-sm shadow-xl shadow-emerald-900/40 hover:scale-105 transition-all flex items-center justify-center space-x-2"
-            >
-              <span>Launch Your Store Now</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              to="/store/home-decor-store"
-              target="_blank"
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-900 border border-slate-800 text-slate-200 font-bold text-sm hover:bg-slate-800 transition-colors flex items-center justify-center space-x-2"
-            >
-              <Store className="w-4 h-4" />
-              <span>Explore Live Storefront Demo</span>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Feature Grid */}
-      <section className="py-16 bg-slate-900/60 border-y border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12 space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">Everything You Need to Scale online</h2>
-            <p className="text-xs text-slate-400">Enterprise-grade multi-tenant architecture designed for conversion</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: MessageCircle,
-                title: 'WhatsApp Direct Ordering',
-                desc: 'Instant 1-click cart confirmation directly to your WhatsApp with pre-formatted itemized receipts.',
-              },
-              {
-                icon: Layers,
-                title: '7 Swappable Themes',
-                desc: 'Tailored aesthetic presets for Home Decor, Fashion, Electronics, Bakery, Grocery, Automotive, and Toys.',
-              },
-              {
-                icon: BarChart2,
-                title: 'Analytics & Multi-Store',
-                desc: 'Track sales performance, customer growth, coupons, and orders across multiple stores in one dashboard.',
-              },
-            ].map((f, i) => {
-              const Icon = f.icon;
-              return (
-                <div key={i} className="p-8 rounded-3xl bg-slate-900 border border-slate-800/90 space-y-4 hover:border-emerald-500/40 transition-colors">
-                  <div className="w-12 h-12 bg-emerald-950 text-emerald-400 rounded-2xl flex items-center justify-center border border-emerald-800/50">
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white">{f.title}</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">{f.desc}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-8 border-t border-slate-900 text-center text-xs text-slate-500">
-        <p>© WhatsStore SaaS. All rights reserved.</p>
-      </footer>
+        <section id="features" className="landing-features"><div className="landing-shell"><div className="section-heading"><span>WHY CHOOSE WAPLY?</span><h2>Everything You Need to Sell Online</h2><p>Powerful tools to help you start, grow, and manage your online business.</p></div><div className="feature-row">{featureItems.map(({ icon: Icon, title, text }) => <div className="feature-item" key={title}><div className="feature-icon"><Icon /></div><strong>{title}</strong><p>{text}</p></div>)}</div></div></section>
+        <section id="how-it-works" className="landing-steps"><div className="landing-shell"><div className="section-heading"><span>HOW IT WORKS</span><h2>Start Selling in 3 Simple Steps</h2></div><div className="steps-row"><div><b>1</b><strong>Create Your Store</strong><p>Sign up and choose your store name.</p></div><div><b>2</b><strong>Add &amp; Share Products</strong><p>Upload products and share your link.</p></div><div><b>3</b><strong>Receive Orders</strong><p>Get orders directly on WhatsApp.</p></div></div></div></section>
+      </main>
+      <footer id="contact" className="landing-footer">© WhatsStore. Sell simply, grow freely.</footer>
     </div>
   );
 };

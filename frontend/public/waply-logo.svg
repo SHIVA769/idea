@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 768" role="img" aria-labelledby="title desc">
+  <title id="title">waply</title>
+  <desc id="desc">Green shopping bag speech bubble logo with yellow handles and waply wordmark</desc>
+  <rect width="768" height="768" rx="8" fill="#fff8f3"/>
+  <path d="M239 302 256 226q4-16 21-16h214q17 0 21 16l17 76" fill="#ffbd18" stroke="#075b43" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M324 247v-38c0-48 32-83 60-83s60 35 60 83v38M324 247v-38c0-48 32-83 60-83s60 35 60 83" fill="none" stroke="#075b43" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="324" cy="247" r="10" fill="#075b43"/>
+  <circle cx="444" cy="247" r="10" fill="#075b43"/>
+  <path d="M139 302h490c43 0 77 34 77 77v91c0 37-25 68-61 75-93 18-207 30-313 17l-104-14-67 51c-8 6-19 1-19-9v-45h-3c-43 0-77-34-77-76v-90c0-43 34-77 77-77Z" fill="#075b43"/>
+  <text x="103" y="467" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="152" font-weight="800" letter-spacing="-13">wap</text>
+  <text x="505" y="467" fill="#ffbd18" font-family="Arial, Helvetica, sans-serif" font-size="152" font-weight="800" letter-spacing="-13">ly</text>
+  <path d="M241 501q145 77 287 0" fill="none" stroke="#ffbd18" stroke-width="12" stroke-linecap="round"/>
+</svg>

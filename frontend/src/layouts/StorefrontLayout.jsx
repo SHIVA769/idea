@@ -18,7 +18,7 @@ import { getThemeConfig } from '../themes/themeRegistry';
 import { WhatsAppFloatingWidget } from '../components/common/WhatsAppFloatingWidget';
 import { CartDrawer } from '../pages/storefront/CartDrawer';
 import { CookieConsentBanner } from '../components/common/CookieConsentBanner';
-import { WhatsAppStoreFooter } from '../pages/storefront/StorefrontSections';
+import { StorefrontAdvertisementPopup, WhatsAppStoreFooter } from '../pages/storefront/StorefrontSections';
 import api from '../api/axios';
 
 const StorefrontCatalogContext = createContext(null);
@@ -436,6 +436,7 @@ export const StorefrontLayout = () => {
         </main>
 
         <CartDrawer storeSlug={slug} themeConfig={themeConfig} />
+        <StorefrontAdvertisementPopup advertisements={storeData?.advertisements} />
         <WhatsAppFloatingWidget config={storeData?.whatsappWidget} storeName={storeData?.name} />
         <CookieConsentBanner />
 

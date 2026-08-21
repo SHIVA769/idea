@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, Outlet } from 'react-router-dom';
+import { BrandLogo } from '../components/common/BrandLogo';
 
 export const AuthLayout = () => {
   return (
@@ -10,9 +11,7 @@ export const AuthLayout = () => {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10">
         <Link to="/" className="inline-flex items-center space-x-2.5 mb-4">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 to-emerald-500 flex items-center justify-center font-black text-white text-lg shadow-lg">
-            WS
-          </div>
+          <BrandLogo className="h-12 w-12 rounded-2xl shadow-lg" />
           <span className="text-2xl font-black tracking-tight text-white">WhatsStore</span>
         </Link>
         <p className="text-xs font-medium text-slate-400">

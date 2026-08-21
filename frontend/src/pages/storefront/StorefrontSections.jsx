@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   MessageCircle,
   Truck,
@@ -17,6 +17,7 @@ import {
   Baby,
   BookOpen,
   Layers,
+  X,
 } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
@@ -200,6 +201,61 @@ export const StorefrontAdvertisements = ({ advertisements = [] }) => {
         })}
       </div>
     </section>
+  );
+};
+
+export const StorefrontAdvertisementPopup = ({ advertisements = [] }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [advertisement, setAdvertisement] = useState(null);
+
+  useEffect(() => {
+    const nextAdvertisement = advertisements[0];
+    if (!nextAdvertisement) return undefined;
+
+    const dismissedKey = `storefront-ad-dismissed-${nextAdvertisement.id}`;
+    if (sessionStorage.getItem(dismissedKey)) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setAdvertisement(nextAdvertisement);
+      setIsOpen(true);
+    }, 700);
+
+    return () => window.clearTimeout(timer);
+  }, [advertisements]);
+
+  const closePopup = () => {
+    if (advertisement?.id) {
+      sessionStorage.setItem(`storefront-ad-dismissed-${advertisement.id}`, 'true');
+    }
+    setIsOpen(false);
+  };
+
+  if (!isOpen || !advertisement) return null;
+
+  const content = (
+    <div className="relative overflow-hidden rounded-2xl bg-slate-950 text-white shadow-2xl">
+      <img src={advertisement.imageUrl} alt={advertisement.title} className="h-52 w-full object-cover opacity-90 sm:h-64" />
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/35 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300">Special offer</p>
+        <h2 className="mt-1 text-xl font-black sm:text-2xl">{advertisement.title}</h2>
+        {advertisement.description && <p className="mt-1 max-w-md text-xs leading-relaxed text-white/80">{advertisement.description}</p>}
+        {advertisement.linkUrl && <span className="mt-3 inline-block text-xs font-bold underline underline-offset-2">Shop offer</span>}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={advertisement.title}>
+      <div className="relative w-full max-w-lg animate-slide-up">
+        <button onClick={closePopup} className="absolute right-3 top-3 z-10 rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/75" aria-label="Close advertisement">
+          <X className="h-4 w-4" />
+        </button>
+        {advertisement.linkUrl ? (
+          <a href={advertisement.linkUrl} target="_blank" rel="noreferrer" onClick={closePopup}>{content}</a>
+        ) : content}
+      </div>
+    </div>
   );
 };
 
