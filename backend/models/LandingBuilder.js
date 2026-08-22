@@ -98,6 +98,7 @@ const landingPageConfigSchema = new mongoose.Schema(
         primaryButtonText: { type: String, default: 'Start Free Trial' },
         secondaryButtonText: { type: String, default: 'Explore Themes' },
         heroImage: { type: String, default: 'https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=1200&auto=format&fit=crop&q=80' },
+        heroVideo: { type: String, default: '' },
         imagePosition: { type: String, default: 'right' },
         backgroundColor: { type: String, default: '#f8fafc' },
         textColor: { type: String, default: '#0f172a' },
