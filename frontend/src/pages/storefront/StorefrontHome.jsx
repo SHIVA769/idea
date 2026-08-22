@@ -37,6 +37,7 @@ export const StorefrontHome = () => {
 
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
+  const [addedProductId, setAddedProductId] = useState(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -84,6 +85,8 @@ export const StorefrontHome = () => {
       taxId: p.taxId,
     }, 1, null);
     setIsDrawerOpen(true);
+    setAddedProductId(p._id);
+    window.setTimeout(() => setAddedProductId(null), 650);
   };
 
   const openQuickView = (p) => {
@@ -157,6 +160,7 @@ export const StorefrontHome = () => {
                   storeWhatsAppPhone={storeData?.whatsappWidget?.phoneNumber}
                   onQuickView={openQuickView}
                   onQuickAdd={handleQuickAdd}
+                  isAdded={addedProductId === product._id}
                 />
               ))}
             </div>
@@ -341,10 +345,10 @@ export const StorefrontHome = () => {
 
                 <button
                   onClick={(e) => handleQuickAdd(product, e)}
-                  className={`p-2.5 rounded-xl transition-transform active:scale-95 shadow-2xs ${themeConfig.cartBtn}`}
+                  className={`p-2.5 rounded-xl transition-transform active:scale-95 shadow-2xs ${themeConfig.cartBtn} ${addedProductId === product._id ? 'cart-add-pop' : ''}`}
                   title="Add to cart"
                 >
-                  <ShoppingBag className="w-4 h-4" />
+                  <ShoppingBag className={`w-4 h-4 ${addedProductId === product._id ? 'cart-add-icon' : ''}`} />
                 </button>
               </div>
             </div>

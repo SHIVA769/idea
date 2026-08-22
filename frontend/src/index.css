@@ -209,6 +209,10 @@
   .cta-portrait { align-self: stretch; width: 43%; background: radial-gradient(ellipse at 48% 80%, #4e9b64 0 22%, transparent 23%), radial-gradient(ellipse at 62% 45%, #dba17f 0 13%, transparent 14%), linear-gradient(135deg, transparent 0 48%, #2e7249 49% 70%, transparent 71%); border-radius: 50% 50% 0 0; opacity: .9; }
   .landing-stats { padding: 12px 0 42px; background: white; }
   @keyframes landing-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes cart-add-pop { 0% { transform: scale(1); } 38% { transform: scale(1.18) rotate(-5deg); } 72% { transform: scale(.94) rotate(3deg); } 100% { transform: scale(1); } }
+  @keyframes cart-add-icon { 0% { transform: translateY(0); } 45% { transform: translateY(-3px); } 100% { transform: translateY(0); } }
+  .cart-add-pop { animation: cart-add-pop .65s ease both; }
+  .cart-add-icon { animation: cart-add-icon .65s ease both; }
   .landing-stats .landing-shell { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 15px 28px; border-radius: 14px; background: #f5fbf6; }
   .landing-stats div { display: flex; flex-direction: column; align-items: center; gap: 3px; border-right: 1px solid #dceee0; }
   .landing-stats div:last-child { border-right: 0; }
@@ -222,5 +226,5 @@
   .hero-blob { animation: none; }
   .landing-hero > .landing-shell > div:first-child, .landing-visual { animation: none; }
   .landing-page.reveal-ready .landing-reveal { opacity: 1; transform: none; transition: none; }
-  .how-it-works-modal, .hero-screenshot-frame, .showcase-play, .landing-button { animation: none; transition: none; }
+  .how-it-works-modal, .hero-screenshot-frame, .showcase-play, .landing-button, .cart-add-pop, .cart-add-icon { animation: none; transition: none; }
 }

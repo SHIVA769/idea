@@ -349,6 +349,7 @@ export const WhatsAppProductCard = ({
   storeWhatsAppPhone,
   onQuickView,
   onQuickAdd,
+  isAdded,
 }) => {
   const price = product.salePrice > 0 ? product.salePrice : product.price;
   const hasDiscount = product.salePrice > 0;
@@ -426,10 +427,10 @@ export const WhatsAppProductCard = ({
           </button>
           <button
             onClick={(e) => onQuickAdd(product, e)}
-            className={`p-2 rounded-lg border transition-colors ${themeConfig?.isDark ? 'border-slate-700 text-white hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+            className={`p-2 rounded-lg border transition-colors ${themeConfig?.isDark ? 'border-slate-700 text-white hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'} ${isAdded ? 'cart-add-pop' : ''}`}
             title="Add to cart"
           >
-            <ShoppingBag className="w-4 h-4" />
+            <ShoppingBag className={`w-4 h-4 ${isAdded ? 'cart-add-icon' : ''}`} />
           </button>
         </div>
       </div>
