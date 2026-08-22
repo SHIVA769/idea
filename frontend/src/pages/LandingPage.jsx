@@ -61,7 +61,7 @@ export const LandingPage = () => {
       <header className="landing-header">
         <div className="landing-shell flex h-[76px] items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5" aria-label="WhatsStore home">
-            <BrandLogo className="h-12 w-auto max-w-[200px] rounded-xl" />
+            <BrandLogo className="h-14 w-auto max-w-[230px] rounded-xl" />
           </Link>
           <nav className={`${menuOpen ? 'flex' : 'hidden'} landing-nav absolute left-4 right-4 top-[68px] flex-col gap-4 rounded-2xl bg-white p-5 shadow-xl md:static md:flex md:flex-row md:items-center md:gap-7 md:bg-transparent md:p-0 md:shadow-none`}>
             <a href="#features">Features</a><a href="#how-it-works">How It Works</a><a href="#themes">Categories</a><a href="#pricing">Pricing</a><a href="#contact">Contact</a>
