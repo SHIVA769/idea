@@ -275,6 +275,16 @@ export const LandingPageBuilder = () => {
                             className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border rounded-lg font-mono text-[11px]"
                           />
                         </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-600 mb-1">Hero Video URL</label>
+                            <input
+                              type="url"
+                              value={config.layout.hero.heroVideo || ''}
+                              onChange={(e) => setConfig({ ...config, layout: { ...config.layout, hero: { ...config.layout.hero, heroVideo: e.target.value } } })}
+                              placeholder="/uploads/hero-demo.mp4"
+                              className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border rounded-lg font-mono text-[11px]"
+                            />
+                          </div>
                       </div>
                     </div>
                   </div>
