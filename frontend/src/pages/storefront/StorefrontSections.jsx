@@ -352,8 +352,8 @@ export const WhatsAppProductCard = ({
   onQuickAdd,
   isAdded,
 }) => {
-  const price = product.salePrice > 0 ? product.salePrice : product.price;
-  const hasDiscount = product.salePrice > 0;
+  const hasDiscount = product.salePrice > 0 && product.salePrice < product.price;
+  const price = hasDiscount ? product.salePrice : product.price;
   const discountPct = hasDiscount ? Math.round(((product.price - product.salePrice) / product.price) * 100) : 0;
 
   const handleWhatsAppOrder = (e) => {
@@ -375,17 +375,17 @@ export const WhatsAppProductCard = ({
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         {product.badge && (
-          <span className={`absolute top-3 left-3 px-2 py-0.5 rounded-md text-[10px] font-black ${themeConfig?.saleBadge || 'bg-[#25D366] text-white'}`}>
+          <span className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm ${themeConfig?.saleBadge || 'bg-[#25D366] text-white'}`}>
             {product.badge}
           </span>
         )}
         {hasDiscount && (
-          <span className={`absolute top-3 ${product.badge ? 'left-24' : 'left-3'} px-2 py-0.5 rounded-md text-[10px] font-black ${themeConfig?.saleBadge || 'bg-[#25D366] text-white'}`}>
-            -{discountPct}%
+          <span className={`absolute top-3 ${product.badge ? 'right-3' : 'left-3'} px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm bg-rose-600 text-white`}>
+            {discountPct}% OFF
           </span>
         )}
         <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <span className="px-3 py-1.5 bg-white text-slate-900 rounded-lg text-xs font-bold flex items-center gap-1">
+          <span className="px-3 py-1.5 bg-white text-slate-900 rounded-lg text-xs font-bold flex items-center gap-1 shadow-md">
             <Eye className="w-3.5 h-3.5" />
             Quick View
           </span>
@@ -393,12 +393,13 @@ export const WhatsAppProductCard = ({
       </div>
 
       <div className="p-4 flex-1 flex flex-col">
-        <div className="flex items-center justify-between gap-2 mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-          <span className={`flex items-center gap-1.5 truncate ${themeConfig?.isDark ? 'text-white' : ''}`}>
-            {storeLogo ? <img src={storeLogo} alt="" className="w-4 h-4 rounded object-contain" /> : null}
-            <span className="truncate">{storeName || 'Store'}</span>
+        <div className="flex items-center justify-between gap-2 mb-1 text-[10px] font-bold uppercase tracking-wider">
+          <span className="text-slate-400 truncate">
+            {product.categoryId?.name || 'General'}
           </span>
-          <span className="text-slate-400">{product.categoryId?.name || 'General'}</span>
+          <span className={`shrink-0 ${product.stockQuantity > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+            {product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : 'Out of stock'}
+          </span>
         </div>
         <div className="flex items-center gap-0.5 mb-1.5">
           {[1, 2, 3, 4, 5].map((s) => (
@@ -408,13 +409,10 @@ export const WhatsAppProductCard = ({
         <h3 className={`font-semibold text-sm line-clamp-2 mb-2 group-hover:opacity-70 transition-colors ${themeConfig?.isDark ? 'text-white' : 'text-slate-900'} ${themeConfig?.fontHeading || ''}`}>
           {product.name}
         </h3>
-        <span className={`text-[10px] font-semibold ${product.stockQuantity > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-          {product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : 'Out of stock'}
-        </span>
         <div className="flex items-baseline gap-2 mb-3 mt-auto">
           <span className={`text-lg font-black ${themeConfig?.isDark ? 'text-white' : ''}`} style={{ color: themeConfig?.isDark ? undefined : themeConfig?.primaryColor }}>{formatCurrency(price)}</span>
           {hasDiscount && (
-            <span className="text-xs text-slate-400 line-through">{formatCurrency(product.price)}</span>
+            <span className="text-xs text-slate-400 line-through font-mono">{formatCurrency(product.price)}</span>
           )}
         </div>
 

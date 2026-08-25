@@ -57,6 +57,9 @@ export const Stores = () => {
       upiId: '',
       accountName: '',
       qrCodeImage: '',
+      bankName: '',
+      accountNumber: '',
+      ifscCode: '',
     },
     pwaSettings: {
       enabled: true,
@@ -147,7 +150,7 @@ export const Stores = () => {
         showOnMobile: true,
         showOnDesktop: true,
       },
-      paymentSettings: store.paymentSettings || { upiEnabled: false, upiId: '', accountName: '', qrCodeImage: '' },
+      paymentSettings: store.paymentSettings || { upiEnabled: false, upiId: '', accountName: '', qrCodeImage: '', bankName: '', accountNumber: '', ifscCode: '' },
       pwaSettings: store.pwaSettings || { enabled: true, appName: store.name, shortName: 'Store', themeColor: '#0284c7', backgroundColor: '#ffffff' },
       customCSS: store.customCSS || '',
       customJS: store.customJS || '',
@@ -183,7 +186,7 @@ export const Stores = () => {
               copyrightText: '© WhatsStore. All rights reserved.',
               address: { street: '', country: 'United States', state: 'California', city: 'Los Angeles', postalCode: '90001' },
               whatsappWidget: { enabled: true, phoneNumber: '+14155552671', defaultMessage: 'Hi! I need help.', position: 'bottom-right', showOnMobile: true, showOnDesktop: true },
-              paymentSettings: { upiEnabled: false, upiId: '', accountName: '', qrCodeImage: '' },
+              paymentSettings: { upiEnabled: false, upiId: '', accountName: '', qrCodeImage: '', bankName: '', accountNumber: '', ifscCode: '' },
               pwaSettings: { enabled: true, appName: 'My Store', shortName: 'Store', themeColor: '#0284c7', backgroundColor: '#ffffff' },
               customCSS: '',
               customJS: '',
@@ -600,6 +603,39 @@ export const Stores = () => {
                     <span className="text-[10px] text-slate-400">or paste an image URL</span>
                   </div>
                   {storeForm.paymentSettings?.qrCodeImage ? <img src={storeForm.paymentSettings.qrCodeImage} alt="UPI QR preview" className="mt-3 h-32 w-32 rounded-lg border border-slate-200 bg-white object-contain p-1" /> : null}
+                </div>
+
+                <div className="border-t border-slate-200 pt-4 dark:border-slate-700">
+                  <p className="mb-3 font-bold text-slate-800 dark:text-slate-200">Bank transfer details</p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div>
+                      <label className="block font-semibold mb-1">Bank name</label>
+                      <input
+                        type="text"
+                        value={storeForm.paymentSettings?.bankName || ''}
+                        onChange={(e) => setStoreForm({ ...storeForm, paymentSettings: { ...storeForm.paymentSettings, bankName: e.target.value } })}
+                        className="w-full p-2 bg-slate-50 dark:bg-slate-800 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold mb-1">Account number</label>
+                      <input
+                        type="text"
+                        value={storeForm.paymentSettings?.accountNumber || ''}
+                        onChange={(e) => setStoreForm({ ...storeForm, paymentSettings: { ...storeForm.paymentSettings, accountNumber: e.target.value } })}
+                        className="w-full p-2 bg-slate-50 dark:bg-slate-800 border rounded-lg font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold mb-1">IFSC code</label>
+                      <input
+                        type="text"
+                        value={storeForm.paymentSettings?.ifscCode || ''}
+                        onChange={(e) => setStoreForm({ ...storeForm, paymentSettings: { ...storeForm.paymentSettings, ifscCode: e.target.value.toUpperCase() } })}
+                        className="w-full p-2 bg-slate-50 dark:bg-slate-800 border rounded-lg font-mono uppercase"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

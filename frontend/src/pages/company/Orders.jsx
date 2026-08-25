@@ -17,6 +17,7 @@ import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
+import { formatCurrency } from '../../utils/currency';
 
 export const Orders = () => {
   const { activeStore } = useAuth();
@@ -28,6 +29,16 @@ export const Orders = () => {
   // Order Details Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [paymentNotifications, setPaymentNotifications] = useState([]);
+
+  const fetchPaymentNotifications = async () => {
+    try {
+      const res = await api.get('/company/notifications', { params: { unread: true } });
+      setPaymentNotifications((res.data?.data || []).filter((notification) => notification.type === 'payment_confirmed'));
+    } catch (err) {
+      console.error('Failed to load payment notifications:', err);
+    }
+  };
 
   const fetchOrders = async () => {
     if (!activeStore) return;
@@ -46,11 +57,12 @@ export const Orders = () => {
 
   useEffect(() => {
     fetchOrders();
+    fetchPaymentNotifications();
   }, [activeStore, search, statusFilter]);
 
   const handleUpdateStatus = async (orderId, newStatus) => {
     try {
-      const res = await api.put(`/company/orders/${orderId}/status`, { status: newStatus });
+      const res = await api.put(`/company/orders/${orderId}/status`, { fulfillmentStatus: newStatus });
       if (res.data?.success) {
         setSelectedOrder(res.data.data);
         fetchOrders();
@@ -97,6 +109,11 @@ export const Orders = () => {
         <div>
           <span className="font-mono font-bold text-slate-900 dark:text-white block">#{o.orderNumber}</span>
           <span className="text-[10px] text-slate-400 font-mono">{new Date(o.createdAt).toLocaleDateString()}</span>
+          {paymentNotifications.some((notification) => notification.orderId?._id === o._id || notification.orderId === o._id) && (
+            <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+              <AlertCircle className="h-3 w-3" /> Payment Confirmed
+            </span>
+          )}
         </div>
       ),
     },
@@ -117,21 +134,29 @@ export const Orders = () => {
       header: 'Total',
       render: (o) => (
         <span className="font-mono font-black text-slate-900 dark:text-white">
-          ${o.pricing?.finalTotal || o.total || 0}
+          {formatCurrency(o.pricing?.finalTotal || o.total || 0)}
         </span>
       ),
     },
     {
       header: 'Payment',
       render: (o) => (
-        <span className="text-xs capitalize font-medium text-slate-600 dark:text-slate-300">
-          {o.paymentMethod?.replace('_', ' ')}
-        </span>
+        <div>
+          <span className="text-xs capitalize font-medium text-slate-600 dark:text-slate-300 block">
+            {o.paymentMethod?.replace('_', ' ')}
+          </span>
+          {o.paymentStatus === 'paid' && (
+            <span className="mt-1 inline-block text-[10px] font-bold text-amber-700">Customer confirmed - verify</span>
+          )}
+          {o.paymentStatus && o.paymentStatus !== 'paid' && (
+            <span className="mt-1 inline-block text-[10px] font-medium capitalize text-slate-400">{o.paymentStatus}</span>
+          )}
+        </div>
       ),
     },
     {
       header: 'Fulfillment',
-      render: (o) => getStatusBadge(o.status),
+      render: (o) => getStatusBadge(o.fulfillmentStatus || o.status),
     },
     {
       header: 'Actions',
@@ -197,9 +222,10 @@ export const Orders = () => {
               <div className="flex items-center justify-between relative">
                 {['pending', 'processing', 'shipped', 'delivered'].map((step, idx) => {
                   const statuses = ['pending', 'processing', 'shipped', 'delivered'];
-                  const currentIdx = statuses.indexOf(selectedOrder.status);
+                  const fulfillmentStatus = selectedOrder.fulfillmentStatus || selectedOrder.status || 'pending';
+                  const currentIdx = statuses.indexOf(fulfillmentStatus);
                   const isCompleted = currentIdx >= idx;
-                  const isCurrent = selectedOrder.status === step;
+                  const isCurrent = fulfillmentStatus === step;
 
                   return (
                     <div key={step} className="flex flex-col items-center z-10">
@@ -272,6 +298,20 @@ export const Orders = () => {
               </div>
             </div>
 
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <h5 className="font-bold text-amber-900">Payment Timeline</h5>
+              {(selectedOrder.timeline || []).filter((event) => event.status === 'Payment Confirmed').map((event, index) => (
+                <div key={`${event.timestamp}-${index}`} className="mt-2 text-amber-800">
+                  <p className="font-bold">Payment Confirmed: customer self-confirmed</p>
+                  <p className="text-[11px]">{event.note || 'Not yet verified against bank records.'}</p>
+                  <p className="mt-1 text-[10px]">{event.timestamp ? new Date(event.timestamp).toLocaleString() : ''}</p>
+                </div>
+              ))}
+              {!(selectedOrder.timeline || []).some((event) => event.status === 'Payment Confirmed') && (
+                <p className="mt-1 text-[11px] text-amber-800">No customer payment confirmation recorded.</p>
+              )}
+            </div>
+
             {/* Ordered Items Table */}
             <div>
               <h5 className="font-bold text-slate-700 dark:text-slate-300 mb-2">Ordered Products</h5>
@@ -280,9 +320,9 @@ export const Orders = () => {
                   <div key={idx} className="p-3 flex items-center justify-between">
                     <div>
                       <span className="font-bold text-slate-900 dark:text-white block">{item.name || item.productId?.name}</span>
-                      <span className="text-[10px] text-slate-400 font-mono">Qty: {item.quantity} × ${item.price}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Qty: {item.quantity} × {formatCurrency(item.price)}</span>
                     </div>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white">${item.total || item.quantity * item.price}</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-white">{formatCurrency(item.total || item.quantity * item.price)}</span>
                   </div>
                 ))}
               </div>
@@ -292,29 +332,29 @@ export const Orders = () => {
             <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl border space-y-1.5 font-mono">
               <div className="flex justify-between text-slate-500">
                 <span>Subtotal:</span>
-                <span>${selectedOrder.pricing?.subtotal || selectedOrder.subtotal || 0}</span>
+                <span>{formatCurrency(selectedOrder.pricing?.subtotal || selectedOrder.subtotal || 0)}</span>
               </div>
               {selectedOrder.pricing?.discount > 0 && (
                 <div className="flex justify-between text-emerald-600">
                   <span>Coupon Discount:</span>
-                  <span>-${selectedOrder.pricing.discount}</span>
+                  <span>-{formatCurrency(selectedOrder.pricing.discount)}</span>
                 </div>
               )}
               {selectedOrder.pricing?.shippingCost > 0 && (
                 <div className="flex justify-between text-slate-500">
                   <span>Shipping:</span>
-                  <span>+${selectedOrder.pricing.shippingCost}</span>
+                  <span>+{formatCurrency(selectedOrder.pricing.shippingCost)}</span>
                 </div>
               )}
               {selectedOrder.pricing?.taxAmount > 0 && (
                 <div className="flex justify-between text-slate-500">
                   <span>Tax:</span>
-                  <span>+${selectedOrder.pricing.taxAmount}</span>
+                  <span>+{formatCurrency(selectedOrder.pricing.taxAmount)}</span>
                 </div>
               )}
               <div className="pt-2 border-t flex justify-between font-bold text-sm text-slate-900 dark:text-white">
                 <span>Final Total:</span>
-                <span>${selectedOrder.pricing?.finalTotal || selectedOrder.total || 0}</span>
+                <span>{formatCurrency(selectedOrder.pricing?.finalTotal || selectedOrder.total || 0)}</span>
               </div>
             </div>
 
@@ -329,7 +369,7 @@ export const Orders = () => {
 
               {selectedOrder.customer?.phone && (
                 <a
-                  href={`https://api.whatsapp.com/send?phone=${selectedOrder.customer.phone.replace(/[^0-9]/g, '')}&text=${encodeURIComponent(`Hi ${selectedOrder.customer.name}! Regarding order #${selectedOrder.orderNumber}: your order is currently ${selectedOrder.status}.`)}`}
+                  href={`https://api.whatsapp.com/send?phone=${selectedOrder.customer.phone.replace(/[^0-9]/g, '')}&text=${encodeURIComponent(`Hi ${selectedOrder.customer.name}! Regarding order #${selectedOrder.orderNumber}: your order is currently ${selectedOrder.fulfillmentStatus || selectedOrder.status || 'pending'}.`)}`}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center px-4 py-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold rounded-xl"

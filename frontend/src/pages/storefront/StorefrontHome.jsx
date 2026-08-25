@@ -300,81 +300,82 @@ export const StorefrontHome = () => {
         </div>
       ) : (
         <div className="storefront-product-grid grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.map((product, index) => (
-            <div
-              key={product._id}
-              onClick={() => openQuickView(product)}
-              style={{ '--product-index': index }}
-              className={`storefront-product-card group cursor-pointer overflow-hidden transition-all duration-300 ${themeConfig.productCard} ${themeConfig.cardRadius || 'rounded-2xl'} flex flex-col justify-between`}
-            >
-              <div>
-                <div className="px-4 pt-4 pb-2">
-                  <div className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                    <span className="flex items-center gap-1.5 truncate">
-                      {storeData?.logo ? <img src={storeData.logo} alt="" className="w-4 h-4 rounded object-contain" /> : null}
-                      <span className="truncate">{storeData?.name || 'Store'}</span>
-                    </span>
-                    <span className="text-slate-400">{product.categoryId?.name || 'General'}</span>
+          {products.map((product, index) => {
+            const hasDiscount = product.salePrice > 0 && product.salePrice < product.price;
+            const discountPct = hasDiscount ? Math.round(((product.price - product.salePrice) / product.price) * 100) : 0;
+
+            return (
+              <div
+                key={product._id}
+                onClick={() => openQuickView(product)}
+                style={{ '--product-index': index }}
+                className={`storefront-product-card group cursor-pointer overflow-hidden transition-all duration-300 ${themeConfig.productCard} ${themeConfig.cardRadius || 'rounded-2xl'} flex flex-col justify-between`}
+              >
+                <div>
+                  <div className="aspect-square bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
+                    <img
+                      src={product.thumbnail || 'https://via.placeholder.com/400'}
+                      alt={product.name}
+                      className={`h-full w-full transition-transform duration-500 group-hover:scale-105 ${themeConfig.isDark ? 'bg-slate-950/60 object-contain p-6' : 'object-cover'}`}
+                    />
+
+                    {product.badge && (
+                      <span className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm ${themeConfig.saleBadge || 'bg-slate-900 text-white'}`}>
+                        {product.badge}
+                      </span>
+                    )}
+                    {hasDiscount && (
+                      <span className={`absolute top-3 ${product.badge ? 'right-3' : 'left-3'} px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm bg-rose-600 text-white`}>
+                        {discountPct}% OFF
+                      </span>
+                    )}
+
+                    <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="px-4 py-2 bg-white text-slate-900 rounded-xl text-xs font-bold shadow-lg flex items-center space-x-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Quick View</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-4 space-y-1.5">
+                    <div className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wider">
+                      <span className="text-slate-400 dark:text-slate-400 truncate">
+                        {product.categoryId?.name || 'General'}
+                      </span>
+                      <span className={`shrink-0 ${product.stockQuantity > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                        {product.stockQuantity > 0 ? `${product.stockQuantity} IN STOCK` : 'OUT OF STOCK'}
+                      </span>
+                    </div>
+                    <h3 className={`font-bold text-sm line-clamp-2 group-hover:opacity-70 transition-colors ${themeConfig.isDark ? 'text-white' : 'text-slate-900'} ${themeConfig.fontHeading}`}>
+                      {product.name}
+                    </h3>
                   </div>
                 </div>
-                <div className="aspect-square bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
-                  <img
-                    src={product.thumbnail || 'https://via.placeholder.com/400'}
-                    alt={product.name}
-                    className={`h-full w-full transition-transform duration-500 group-hover:scale-105 ${themeConfig.isDark ? 'bg-slate-950/60 object-contain p-6' : 'object-cover'}`}
-                  />
 
-                  {product.badge && (
-                    <span className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm ${themeConfig.saleBadge}`}>
-                      {product.badge}
+                <div className="p-4 pt-0 flex items-center justify-between">
+                  <div className="flex items-baseline space-x-1.5">
+                    <span className={`text-base font-black font-mono ${themeConfig.isDark ? 'text-white' : 'text-slate-900'}`}>
+                      {formatCurrency(hasDiscount ? product.salePrice : product.price)}
                     </span>
-                  )}
-                  {product.salePrice > 0 && (
-                    <span className={`absolute top-3 ${product.badge ? 'left-24' : 'left-3'} px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm ${themeConfig.saleBadge}`}>
-                      -{Math.round(((product.price - product.salePrice) / product.price) * 100)}%
-                    </span>
-                  )}
-
-                  <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <span className="px-4 py-2 bg-white text-slate-900 rounded-xl text-xs font-bold shadow-lg flex items-center space-x-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Quick View</span>
-                    </span>
+                    {hasDiscount && (
+                      <span className="text-xs text-slate-400 line-through font-mono">
+                        {formatCurrency(product.price)}
+                      </span>
+                    )}
                   </div>
-                </div>
 
-                <div className="p-4 space-y-2">
-                  <span className={`text-[10px] font-bold uppercase tracking-wider ${product.stockQuantity > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {product.stockQuantity > 0 ? `${product.stockQuantity} IN STOCK` : 'OUT OF STOCK'}
-                  </span>
-                  <h3 className={`font-bold text-sm line-clamp-2 group-hover:opacity-70 transition-colors ${themeConfig.isDark ? 'text-white' : 'text-slate-900'} ${themeConfig.fontHeading}`}>
-                    {product.name}
-                  </h3>
+                  <button
+                    onClick={(e) => handleQuickAdd(product, e)}
+                    className={`p-2.5 rounded-xl transition-transform active:scale-95 shadow-2xs ${themeConfig.cartBtn} ${addedProductId === product._id ? 'cart-add-pop' : ''}`}
+                    title="Add to cart"
+                  >
+                    <ShoppingBag className={`w-4 h-4 ${addedProductId === product._id ? 'cart-add-icon' : ''}`} />
+                  </button>
                 </div>
               </div>
-
-              <div className="p-4 pt-0 flex items-center justify-between">
-                <div className="flex items-baseline space-x-1.5">
-                  <span className={`text-base font-black font-mono ${themeConfig.isDark ? 'text-white' : 'text-slate-900'}`}>
-                    {formatCurrency(product.salePrice > 0 ? product.salePrice : product.price)}
-                  </span>
-                  {product.salePrice > 0 && (
-                    <span className="text-xs text-slate-400 line-through font-mono">
-                      {formatCurrency(product.price)}
-                    </span>
-                  )}
-                </div>
-
-                <button
-                  onClick={(e) => handleQuickAdd(product, e)}
-                  className={`p-2.5 rounded-xl transition-transform active:scale-95 shadow-2xs ${themeConfig.cartBtn} ${addedProductId === product._id ? 'cart-add-pop' : ''}`}
-                  title="Add to cart"
-                >
-                  <ShoppingBag className={`w-4 h-4 ${addedProductId === product._id ? 'cart-add-icon' : ''}`} />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

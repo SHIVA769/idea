@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -24,6 +24,7 @@ import {
   ChevronDown,
   PlusCircle,
   QrCode,
+  Bell,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -31,6 +32,7 @@ import { useLanguage } from '../context/LanguageContext';
 import api from '../api/axios';
 import { QRCodeModal } from '../components/common/QRCodeModal';
 import { BrandLogo } from '../components/common/BrandLogo';
+import toast from 'react-hot-toast';
 
 export const CompanyLayout = () => {
   const { user, logout, activeStore, setActiveStore, hasPermission } = useAuth();
@@ -43,6 +45,48 @@ export const CompanyLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isStoreDropdownOpen, setIsStoreDropdownOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const notifiedIds = useRef(new Set());
+
+  useEffect(() => {
+    if (!user) return undefined;
+
+    const pollNotifications = async () => {
+      try {
+        const res = await api.get('/company/notifications', { params: { unread: true } });
+        const notifications = res.data?.data || [];
+        notifications.slice().reverse().forEach((notification) => {
+          if (notifiedIds.current.has(notification._id)) return;
+          notifiedIds.current.add(notification._id);
+          toast.custom(
+            (toastItem) => (
+              <div
+                className={`pointer-events-auto flex w-[min(22rem,calc(100vw-2rem))] items-start gap-3 rounded-2xl border border-amber-200 bg-white p-4 text-left shadow-2xl transition-all dark:border-amber-900/60 dark:bg-slate-900 ${toastItem.visible ? 'animate-slide-up' : 'opacity-0'}`}
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/70 dark:text-amber-300">
+                  <Bell className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-black text-slate-900 dark:text-white">{notification.title}</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">{notification.message}</p>
+                  <p className="mt-2 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">Action required: verify payment</p>
+                </div>
+                <button type="button" onClick={() => toast.dismiss(toastItem.id)} className="shrink-0 text-slate-400 hover:text-slate-700 dark:hover:text-white" aria-label="Dismiss notification">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ),
+            { duration: 10000 }
+          );
+        });
+      } catch (err) {
+        console.error('Failed to load company notifications:', err);
+      }
+    };
+
+    pollNotifications();
+    const intervalId = window.setInterval(pollNotifications, 15000);
+    return () => window.clearInterval(intervalId);
+  }, [user]);
 
   useEffect(() => {
     const fetchStores = async () => {

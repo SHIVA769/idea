@@ -48,13 +48,26 @@ export const QuickViewModal = ({ isOpen, onClose, product, storeWhatsAppPhone })
     window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`, '_blank');
   };
 
+  const hasDiscount = product.salePrice > 0 && product.salePrice < product.price;
+  const discountPct = hasDiscount ? Math.round(((product.price - product.salePrice) / product.price) * 100) : 0;
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Product Quick View" maxWidth="max-w-3xl">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
         {/* Left: Gallery */}
         <div className="space-y-3">
-          <div className="aspect-square bg-slate-100 dark:bg-slate-800 rounded-2xl overflow-hidden">
+          <div className="aspect-square bg-slate-100 dark:bg-slate-800 rounded-2xl overflow-hidden relative">
             <img src={currentImage} alt={product.name} className="w-full h-full object-cover" />
+            {product.badge && (
+              <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm bg-slate-900 text-white">
+                {product.badge}
+              </span>
+            )}
+            {hasDiscount && (
+              <span className={`absolute top-3 ${product.badge ? 'right-3' : 'left-3'} px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm bg-rose-600 text-white`}>
+                {discountPct}% OFF
+              </span>
+            )}
           </div>
 
           {galleryImages.length > 1 && (
@@ -78,20 +91,33 @@ export const QuickViewModal = ({ isOpen, onClose, product, storeWhatsAppPhone })
         <div className="space-y-4 flex flex-col justify-between">
           <div className="space-y-3">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400">
-                {product.categoryId?.name || 'In Stock'}
-              </span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 truncate">
+                  {product.categoryId?.name || 'General'}
+                </span>
+                <span className={`text-[10px] font-bold uppercase tracking-wider shrink-0 ${product.stockQuantity > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : 'Out of stock'}
+                </span>
+              </div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">{product.name}</h2>
               <span className="text-xs text-slate-400 font-mono">SKU: {product.sku}</span>
             </div>
 
-            {/* Price */}
-            <div className="flex items-baseline space-x-2">
+            {/* Price & Discount */}
+            <div className="flex items-center flex-wrap gap-2">
               <span className="text-2xl font-black text-slate-900 dark:text-white font-mono">
-                {formatCurrency(product.salePrice > 0 ? product.salePrice : product.price)}
+                {formatCurrency(hasDiscount ? product.salePrice : product.price)}
               </span>
-              {product.salePrice > 0 && (
-                <span className="text-sm text-slate-400 line-through font-mono">{formatCurrency(product.price)}</span>
+              {hasDiscount && (
+                <>
+                  <span className="text-sm text-slate-400 line-through font-mono">{formatCurrency(product.price)}</span>
+                  <span className="px-2 py-0.5 text-[11px] font-bold text-white bg-rose-600 rounded-full">
+                    {discountPct}% OFF
+                  </span>
+                  <span className="text-xs text-emerald-600 font-semibold">
+                    (Save {formatCurrency(product.price - product.salePrice)})
+                  </span>
+                </>
               )}
             </div>
 
