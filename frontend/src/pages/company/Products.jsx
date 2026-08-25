@@ -22,6 +22,7 @@ import { RichTextEditor } from '../../components/common/RichTextEditor';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
+import { formatCurrency } from '../../utils/currency';
 
 export const Products = () => {
   const { activeStore, setActiveStore } = useAuth();
@@ -303,14 +304,27 @@ export const Products = () => {
     },
     {
       header: 'Price',
-      render: (p) => (
-        <div>
-          <span className="font-bold font-mono text-slate-900 dark:text-white">${p.price}</span>
-          {p.salePrice > 0 && (
-            <span className="text-[10px] text-emerald-600 font-mono block">Sale: ${p.salePrice}</span>
-          )}
-        </div>
-      ),
+      render: (p) => {
+        const hasDiscount = p.salePrice > 0 && p.salePrice < p.price;
+        const discountPct = hasDiscount ? Math.round(((p.price - p.salePrice) / p.price) * 100) : 0;
+        return (
+          <div>
+            <span className="font-bold font-mono text-slate-900 dark:text-white">
+              {formatCurrency(hasDiscount ? p.salePrice : p.price)}
+            </span>
+            {hasDiscount && (
+              <div className="flex items-center space-x-1.5 mt-0.5">
+                <span className="text-[10px] text-slate-400 line-through font-mono">
+                  {formatCurrency(p.price)}
+                </span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                  -{discountPct}%
+                </span>
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       header: 'Stock',
@@ -325,7 +339,7 @@ export const Products = () => {
       header: 'Status',
       className: 'hidden lg:table-cell',
       render: (p) => (
-        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${p.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${p.status === 'active' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
           {p.status}
         </span>
       ),
@@ -335,7 +349,7 @@ export const Products = () => {
       className: 'text-right',
       render: (p) => (
         <div className="flex items-center justify-end space-x-1">
-          <button onClick={() => openEditModal(p)} className="p-1.5 text-slate-600 hover:text-slate-900">
+          <button onClick={() => openEditModal(p)} className="p-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
             <Edit className="w-3.5 h-3.5" />
           </button>
           <button onClick={() => handleDelete(p._id)} className="p-1.5 text-rose-600 hover:text-rose-900">
@@ -351,7 +365,7 @@ export const Products = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">Product Catalog</h1>
-          <p className="text-xs text-slate-500">Manage merchandise, variants, multi-image galleries & price tiers</p>
+          <p className="text-xs text-slate-500">Manage merchandise, categories, discounts, variants & price tiers</p>
         </div>
         <button
           onClick={openCreateModal}
@@ -383,27 +397,44 @@ export const Products = () => {
             ))}
           </select>
         }
-        renderGridItem={(p) => (
-          <div key={p._id} className="bg-white dark:bg-slate-900 border rounded-xl p-4 shadow-2xs space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-sm text-slate-900 dark:text-white">{p.name}</span>
-              <span className="text-[10px] font-mono text-slate-500">${p.price}</span>
+        renderGridItem={(p) => {
+          const hasDiscount = p.salePrice > 0 && p.salePrice < p.price;
+          const discountPct = hasDiscount ? Math.round(((p.price - p.salePrice) / p.price) * 100) : 0;
+
+          return (
+            <div key={p._id} className="bg-white dark:bg-slate-900 border rounded-xl p-4 shadow-2xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-sm text-slate-900 dark:text-white truncate max-w-[160px]">{p.name}</span>
+                <div className="text-right">
+                  <span className="font-bold text-xs font-mono text-slate-900 dark:text-white">
+                    {formatCurrency(hasDiscount ? p.salePrice : p.price)}
+                  </span>
+                  {hasDiscount && (
+                    <span className="text-[10px] text-slate-400 line-through font-mono block">
+                      {formatCurrency(p.price)}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="text-[11px] text-slate-500 space-y-1">
+                <div>SKU: {p.sku || '—'}</div>
+                <div>Store: {p.storeId?.name || '—'}</div>
+                <div>Category: <span className="font-semibold text-slate-700 dark:text-slate-300">{p.categoryId?.name || 'General'}</span></div>
+                <div>Stock: {p.stockQuantity}</div>
+                {p.badge && <div>Badge: <span className="font-bold text-emerald-600">{p.badge}</span></div>}
+                {hasDiscount && <div>Discount: <span className="font-bold text-rose-600">-{discountPct}% OFF</span></div>}
+              </div>
+              <div className="pt-2 mt-2 border-t flex items-center justify-between">
+                <button onClick={() => openEditModal(p)} className="text-xs font-semibold text-emerald-600 hover:underline">
+                  Edit
+                </button>
+                <button onClick={() => handleDelete(p._id)} className="text-xs text-rose-500 hover:text-rose-700">
+                  Delete
+                </button>
+              </div>
             </div>
-            <div className="text-[11px] text-slate-500 space-y-1">
-              <div>SKU: {p.sku || '—'}</div>
-              <div>Store: {p.storeId?.name || '—'}</div>
-              <div>Stock: {p.stockQuantity}</div>
-            </div>
-            <div className="pt-2 mt-2 border-t flex items-center justify-between">
-              <button onClick={() => openEditModal(p)} className="text-xs font-semibold text-emerald-600 hover:underline">
-                Edit
-              </button>
-              <button onClick={() => handleDelete(p._id)} className="text-xs text-rose-500 hover:text-rose-700">
-                Delete
-              </button>
-            </div>
-          </div>
-        )}
+          );
+        }}
       />
 
       {/* 6-Tab Product Create / Edit Modal */}
@@ -466,22 +497,55 @@ export const Products = () => {
                     onChange={(e) => setProductForm({ ...productForm, categoryId: e.target.value })}
                     className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border rounded-lg"
                   >
-                    <option value="">Select Category</option>
+                    <option value="">Select Category (General)</option>
                     {categories.map((c) => (
                       <option key={c._id} value={c._id}>{c.name}</option>
                     ))}
                   </select>
+                  {productForm.categoryId && (
+                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 font-semibold">
+                      Selected: {categories.find((c) => c._id === productForm.categoryId)?.name || 'Category'}
+                    </p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Product Badge</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Product Badge</label>
+                    <span className="text-[10px] text-slate-400">Quick presets:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1 mb-1.5">
+                    {['NEW', 'HOT', 'SALE', 'BESTSELLER', 'TRENDING', 'LIMITED'].map((badgePreset) => (
+                      <button
+                        key={badgePreset}
+                        type="button"
+                        onClick={() => setProductForm({ ...productForm, badge: badgePreset })}
+                        className={`px-2 py-0.5 text-[10px] font-bold rounded-md border transition-colors ${
+                          productForm.badge === badgePreset
+                            ? 'bg-slate-900 text-white border-slate-900'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        {badgePreset}
+                      </button>
+                    ))}
+                    {productForm.badge && (
+                      <button
+                        type="button"
+                        onClick={() => setProductForm({ ...productForm, badge: '' })}
+                        className="px-2 py-0.5 text-[10px] text-slate-400 hover:text-rose-500"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="text"
                     maxLength={24}
                     placeholder="NEW, BESTSELLER, LIMITED"
                     value={productForm.badge}
                     onChange={(e) => setProductForm({ ...productForm, badge: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border rounded-lg uppercase"
+                    className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border rounded-lg uppercase font-semibold"
                   />
                   <p className="text-[10px] text-slate-400 mt-1">Shown on the storefront product image. Leave blank to hide it.</p>
                 </div>
@@ -509,62 +573,159 @@ export const Products = () => {
             )}
 
             {/* Tab 2: Pricing & Taxes */}
-            {activeFormTab === 'pricing' && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Regular Price ($) *</label>
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      step="0.01"
-                      value={productForm.price}
-                      onChange={(e) => setProductForm({ ...productForm, price: Number(e.target.value) })}
-                      className="w-full px-3 py-2 text-sm font-mono bg-slate-50 dark:bg-slate-800 border rounded-lg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Sale Price ($)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={productForm.salePrice}
-                      onChange={(e) => setProductForm({ ...productForm, salePrice: Number(e.target.value) })}
-                      className="w-full px-3 py-2 text-sm font-mono bg-slate-50 dark:bg-slate-800 border rounded-lg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Cost Price ($)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={productForm.costPrice}
-                      onChange={(e) => setProductForm({ ...productForm, costPrice: Number(e.target.value) })}
-                      className="w-full px-3 py-2 text-sm font-mono bg-slate-50 dark:bg-slate-800 border rounded-lg"
-                    />
-                  </div>
-                </div>
+            {activeFormTab === 'pricing' && (() => {
+              const regularPrice = Number(productForm.price) || 0;
+              const salePrice = Number(productForm.salePrice) || 0;
+              const hasDiscount = salePrice > 0 && salePrice < regularPrice;
+              const discountPct = hasDiscount ? Math.round(((regularPrice - salePrice) / regularPrice) * 100) : 0;
+              const savings = hasDiscount ? regularPrice - salePrice : 0;
+              const isInvalidSale = salePrice >= regularPrice && salePrice > 0;
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Tax Rule</label>
-                  <select
-                    value={productForm.taxId}
-                    onChange={(e) => setProductForm({ ...productForm, taxId: e.target.value })}
-                    className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border rounded-lg"
-                  >
-                    <option value="">No Tax Applied</option>
-                    {taxes.map((t) => (
-                      <option key={t._id} value={t._id}>
-                        {t.name} ({t.type === 'percentage' ? `${t.rate}%` : `$${t.rate}`})
-                      </option>
-                    ))}
-                  </select>
+              const applyDiscountPercent = (pct) => {
+                if (pct <= 0 || regularPrice <= 0) {
+                  setProductForm((prev) => ({ ...prev, salePrice: 0 }));
+                } else {
+                  const computedSale = Math.round(regularPrice * (1 - pct / 100) * 100) / 100;
+                  setProductForm((prev) => ({ ...prev, salePrice: Math.max(0, computedSale) }));
+                }
+              };
+
+              return (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Regular Price (₹) *</label>
+                      <input
+                        type="number"
+                        required
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={productForm.price}
+                        onChange={(e) => setProductForm({ ...productForm, price: Number(e.target.value) })}
+                        className="w-full px-3 py-2 text-sm font-mono bg-slate-50 dark:bg-slate-800 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Sale / Discounted Price (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={productForm.salePrice}
+                        onChange={(e) => setProductForm({ ...productForm, salePrice: Number(e.target.value) })}
+                        className="w-full px-3 py-2 text-sm font-mono bg-slate-50 dark:bg-slate-800 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Cost Price (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={productForm.costPrice}
+                        onChange={(e) => setProductForm({ ...productForm, costPrice: Number(e.target.value) })}
+                        className="w-full px-3 py-2 text-sm font-mono bg-slate-50 dark:bg-slate-800 border rounded-lg"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Quick Discount Presets */}
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Quick Discount Presets</span>
+                      {hasDiscount && (
+                        <span className="text-xs font-bold text-rose-600 dark:text-rose-400">
+                          {discountPct}% Discount Applied
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {[10, 15, 20, 25, 30, 50].map((pct) => (
+                        <button
+                          key={pct}
+                          type="button"
+                          onClick={() => applyDiscountPercent(pct)}
+                          className={`px-3 py-1 text-xs font-bold rounded-lg border transition-colors ${
+                            discountPct === pct
+                              ? 'bg-rose-600 text-white border-rose-600'
+                              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          {pct}% OFF
+                        </button>
+                      ))}
+                      {productForm.salePrice > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => applyDiscountPercent(0)}
+                          className="px-3 py-1 text-xs font-semibold text-slate-500 hover:text-rose-600 transition-colors"
+                        >
+                          Clear Discount
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Live Discount & Badge Preview */}
+                  {hasDiscount && (
+                    <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">Live Price &amp; Badge Preview</span>
+                        <div className="flex items-center space-x-1.5">
+                          {productForm.badge && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-900 text-white shadow-xs">
+                              {productForm.badge}
+                            </span>
+                          )}
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-xs">
+                            {discountPct}% OFF
+                          </span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-xs pt-1 border-t border-emerald-200/50 dark:border-emerald-800/50">
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Original Price</span>
+                          <span className="font-mono text-slate-400 line-through">{formatCurrency(regularPrice)}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Customer Saves</span>
+                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(savings)}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 block">Customer Pays</span>
+                          <span className="font-mono font-black text-slate-900 dark:text-white">{formatCurrency(salePrice)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {isInvalidSale && (
+                    <div className="p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-800 dark:text-amber-300">
+                      Warning: Sale price ({formatCurrency(salePrice)}) should be less than the regular price ({formatCurrency(regularPrice)}) for a discount to take effect.
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Tax Rule</label>
+                    <select
+                      value={productForm.taxId}
+                      onChange={(e) => setProductForm({ ...productForm, taxId: e.target.value })}
+                      className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border rounded-lg"
+                    >
+                      <option value="">No Tax Applied</option>
+                      {taxes.map((t) => (
+                        <option key={t._id} value={t._id}>
+                          {t.name} ({t.type === 'percentage' ? `${t.rate}%` : `₹${t.rate}`})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Tab 3: Inventory & Variants */}
             {activeFormTab === 'inventory' && (

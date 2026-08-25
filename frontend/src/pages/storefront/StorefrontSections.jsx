@@ -18,6 +18,8 @@ import {
   BookOpen,
   Layers,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
@@ -41,6 +43,23 @@ export const getCategoryIcon = (name = '') => {
 
 export const StorefrontHero = ({ storeData, themeConfig, onShopNow }) => {
   const whatsappPhone = storeData?.whatsappWidget?.phoneNumber;
+  const heroImages = [...new Set([storeData?.bannerImage, themeConfig.heroImage].filter(Boolean))];
+  const [activeImage, setActiveImage] = useState(0);
+
+  useEffect(() => {
+    setActiveImage(0);
+  }, [storeData?.bannerImage, themeConfig.heroImage]);
+
+  useEffect(() => {
+    if (heroImages.length < 2) return undefined;
+    const timer = window.setInterval(() => {
+      setActiveImage((current) => (current + 1) % heroImages.length);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [heroImages.length]);
+
+  const showPreviousImage = () => setActiveImage((current) => (current - 1 + heroImages.length) % heroImages.length);
+  const showNextImage = () => setActiveImage((current) => (current + 1) % heroImages.length);
 
   const handleShopNow = () => {
     if (onShopNow) {
@@ -94,12 +113,30 @@ export const StorefrontHero = ({ storeData, themeConfig, onShopNow }) => {
 
         <div className="w-full md:w-2/5 flex justify-center z-10">
           <div className="relative">
-            <div className="w-56 h-56 sm:w-72 sm:h-72 rounded-3xl bg-white/60 backdrop-blur-sm shadow-xl flex items-center justify-center overflow-hidden">
-              <img
-                src={storeData?.bannerImage || themeConfig.heroImage}
-                alt="Shop on WhatsApp"
-                className="w-full h-full object-cover rounded-3xl"
-              />
+            <div className="relative w-56 h-56 sm:w-72 sm:h-72 rounded-3xl bg-white/60 backdrop-blur-sm shadow-xl flex items-center justify-center overflow-hidden">
+              {heroImages.map((image, index) => (
+                <img
+                  key={image}
+                  src={image}
+                  alt={`Shop on WhatsApp showcase ${index + 1}`}
+                  className={`absolute inset-0 h-full w-full rounded-3xl object-cover transition-opacity duration-700 ${index === activeImage ? 'opacity-100' : 'opacity-0'}`}
+                />
+              ))}
+              {heroImages.length > 1 && (
+                <>
+                  <button type="button" onClick={showPreviousImage} aria-label="Previous hero image" className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/85 p-2 text-slate-700 shadow-md transition hover:bg-white">
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button type="button" onClick={showNextImage} aria-label="Next hero image" className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/85 p-2 text-slate-700 shadow-md transition hover:bg-white">
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                  <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5 rounded-full bg-slate-900/35 px-2 py-1">
+                    {heroImages.map((image, index) => (
+                      <button type="button" key={image} onClick={() => setActiveImage(index)} aria-label={`Show hero image ${index + 1}`} className={`h-1.5 w-1.5 rounded-full transition-colors ${index === activeImage ? 'bg-white' : 'bg-white/50'}`} />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
             <div className={`absolute -bottom-3 -right-3 w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${themeConfig.cartBtn}`}>
               <MessageCircle className="w-8 h-8 text-white" />
