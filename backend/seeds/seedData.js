@@ -132,10 +132,9 @@ export const seedDatabase = async () => {
 
     // 3. Create Currencies
     await Currency.create([
-      { name: 'US Dollar', code: 'USD', symbol: '$', description: 'United States Dollar', isDefault: true },
+      { name: 'Indian Rupee', code: 'INR', symbol: '₹', description: 'Indian Rupee', isDefault: true },
       { name: 'Euro', code: 'EUR', symbol: '€', description: 'European Euro', isDefault: false },
       { name: 'British Pound', code: 'GBP', symbol: '£', description: 'Pound Sterling', isDefault: false },
-      { name: 'Indian Rupee', code: 'INR', symbol: '₹', description: 'Indian Rupee', isDefault: false },
       { name: 'UAE Dirham', code: 'AED', symbol: 'د.إ', description: 'Emirati Dirham', isDefault: false },
     ]);
 

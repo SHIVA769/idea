@@ -64,6 +64,14 @@ const storeSchema = new mongoose.Schema(
       showOnDesktop: { type: Boolean, default: true },
     },
 
+    // Store-owner payment instructions for manual UPI payments
+    paymentSettings: {
+      upiEnabled: { type: Boolean, default: false },
+      upiId: { type: String, default: '' },
+      accountName: { type: String, default: '' },
+      qrCodeImage: { type: String, default: '' },
+    },
+
     // Advanced & Security
     customCSS: { type: String, default: '', maxLength: 50000 },
     customJS: { type: String, default: '', maxLength: 50000 },

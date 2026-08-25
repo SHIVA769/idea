@@ -76,15 +76,19 @@ export const getStores = async (req, res) => {
 
     const enriched = await Promise.all(
       stores.map(async (s) => {
-        const orderCount = await Order.countDocuments({ storeId: s._id });
-        const orders = await Order.find({ storeId: s._id });
-        const revenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
-        const productCount = await Product.countDocuments({ storeId: s._id });
-        const customerCount = await Customer.countDocuments({ storeId: s._id });
+        const [orderSummary, productCount, customerCount] = await Promise.all([
+          Order.aggregate([
+            { $match: { storeId: s._id } },
+            { $group: { _id: null, orderCount: { $sum: 1 }, revenue: { $sum: '$total' } } },
+          ]),
+          Product.countDocuments({ storeId: s._id }),
+          Customer.countDocuments({ storeId: s._id }),
+        ]);
+        const summary = orderSummary[0] || { orderCount: 0, revenue: 0 };
         return {
           ...s.toObject(),
-          orderCount,
-          revenue: `$${revenue.toFixed(2)}`,
+          orderCount: summary.orderCount,
+          revenue: `$${summary.revenue.toFixed(2)}`,
           productCount,
           customerCount,
         };
@@ -94,8 +98,11 @@ export const getStores = async (req, res) => {
     const totalStores = stores.length;
     const activeStores = stores.filter((s) => s.status === 'active').length;
     const totalCustomers = await Customer.countDocuments({ companyId });
-    const allOrders = await Order.find({ companyId });
-    const totalRevenue = allOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+    const revenueSummary = await Order.aggregate([
+      { $match: { companyId } },
+      { $group: { _id: null, totalRevenue: { $sum: '$total' } } },
+    ]);
+    const totalRevenue = revenueSummary[0]?.totalRevenue || 0;
 
     return sendSuccess(res, {
       stores: enriched,
@@ -114,7 +121,7 @@ export const getStores = async (req, res) => {
 export const createStore = async (req, res) => {
   try {
     const companyId = getCompanyId(req);
-    const { name, slug, description, email, logo, bannerImage, theme, domainConfig, pwaConfig, welcomeMessage, storeDescription, address, socialLinks } = req.body;
+    const { name, slug, description, email, logo, bannerImage, theme, domainConfig, pwaConfig, welcomeMessage, storeDescription, address, socialLinks, paymentSettings } = req.body;
 
     if (!name) return sendError(res, 'Store name is required.', 400);
 
@@ -137,6 +144,7 @@ export const createStore = async (req, res) => {
       storeDescription,
       address: address || {},
       socialLinks: socialLinks || {},
+      paymentSettings: paymentSettings || {},
       status: 'active',
     });
 

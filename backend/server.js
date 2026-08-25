@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import path from 'path';
 import fs from 'fs';
 
@@ -65,6 +66,8 @@ connectDB().then(async (conn) => {
 
   // Verify SMTP Connection at startup
   await verifySMTPConnection();
+}).catch((error) => {
+  console.error(`[Startup Error] ${error.message}`);
 });
 
 // Middleware
@@ -74,6 +77,15 @@ app.use(compression());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(morgan('dev'));
+
+// Do not let Mongoose buffer requests indefinitely when the database is offline.
+app.use('/api', (req, res, next) => {
+  if (req.path === '/health' || mongoose.connection.readyState === 1) return next();
+  return res.status(503).json({
+    success: false,
+    message: 'Database unavailable. Please try again when the server is connected to MongoDB.',
+  });
+});
 
 // Static uploads folder
 const uploadsPath = path.resolve('uploads');
@@ -85,7 +97,8 @@ app.use('/uploads', express.static(uploadsPath));
 // API Root Health Check
 app.get('/api/health', (req, res) => {
   res.json({
-    status: 'online',
+    status: mongoose.connection.readyState === 1 ? 'online' : 'degraded',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'unavailable',
     app: 'WhatsStore SaaS REST API',
     version: '1.0.0',
     timestamp: new Date().toISOString(),

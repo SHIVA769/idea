@@ -35,8 +35,8 @@ const brandSettingsSchema = new mongoose.Schema(
 const currencySettingsSchema = new mongoose.Schema(
   {
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', default: null, index: true },
-    defaultCurrency: { type: String, default: 'USD' },
-    symbol: { type: String, default: '$' },
+    defaultCurrency: { type: String, default: 'INR' },
+    symbol: { type: String, default: '₹' },
     decimalPlaces: { type: Number, default: 2 },
     symbolPosition: { type: String, enum: ['before', 'after'], default: 'before' },
     decimalSeparator: { type: String, default: '.' },

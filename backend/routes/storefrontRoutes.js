@@ -6,6 +6,7 @@ import {
   applyCoupon,
   getStoreShippingMethods,
   checkoutStoreOrder,
+  confirmStorefrontPayment,
   trackPublicOrder,
   downloadPublicOrderInvoice,
   getPublicLandingPage,
@@ -30,6 +31,7 @@ router.get('/:slug/products/:productId', getProductQuickView);
 router.post('/:slug/coupon/apply', applyCoupon);
 router.get('/:slug/shipping-methods', getStoreShippingMethods);
 router.post('/:slug/checkout', checkoutStoreOrder);
+router.post('/:slug/orders/:orderNumber/payment-confirmation', confirmStorefrontPayment);
 router.get('/:slug/orders/:orderNumber', trackPublicOrder);
 router.get('/:slug/orders/:orderNumber/invoice', downloadPublicOrderInvoice);
 

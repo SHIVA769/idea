@@ -67,6 +67,12 @@ export const getStoreBySlug = async (req, res) => {
         address: store.address,
         socialLinks: store.socialLinks,
         whatsappWidget: store.whatsappWidget,
+        paymentSettings: {
+          upiEnabled: store.paymentSettings?.upiEnabled ?? false,
+          upiId: store.paymentSettings?.upiId || '',
+          accountName: store.paymentSettings?.accountName || '',
+          qrCodeImage: store.paymentSettings?.qrCodeImage || '',
+        },
         pwaConfig: store.pwaConfig,
         customCSS: store.customCSS,
         customJS: store.customJS,
@@ -240,6 +246,10 @@ export const checkoutStoreOrder = async (req, res) => {
     const store = await Store.findOne({ slug, status: 'active' });
     if (!store) return sendError(res, 'Store not found.', 404);
 
+    if (paymentMethod === 'UPI' && (!store.paymentSettings?.upiEnabled || !store.paymentSettings?.upiId)) {
+      return sendError(res, 'UPI payments are not enabled for this store.', 400);
+    }
+
     if (!items || items.length === 0) {
       return sendError(res, 'Cart is empty.', 400);
     }
@@ -333,7 +343,7 @@ export const checkoutStoreOrder = async (req, res) => {
         companyId: store.companyId,
         storeId: store._id,
         firstName: contactInfo.firstName,
-        lastName: contactInfo.lastName || '',
+        lastName: contactInfo.lastName?.trim() || 'Customer',
         email: contactInfo.email.toLowerCase(),
         phone: contactInfo.phone || '',
         shippingAddress: {
@@ -387,7 +397,7 @@ export const checkoutStoreOrder = async (req, res) => {
         postalCode: contactInfo.postalCode || '',
       },
       paymentMethod,
-      paymentStatus: paymentMethod === 'Cash on Delivery' || paymentMethod === 'WhatsApp' || paymentMethod === 'Bank Transfer' ? 'pending' : 'paid',
+      paymentStatus: paymentMethod === 'Cash on Delivery' || paymentMethod === 'WhatsApp' || paymentMethod === 'Bank Transfer' || paymentMethod === 'UPI' ? 'pending' : 'paid',
       fulfillmentStatus: 'pending',
       timeline: [
         {
@@ -491,6 +501,32 @@ export const checkoutStoreOrder = async (req, res) => {
     );
   } catch (error) {
     console.error('Checkout error:', error);
+    return sendError(res, error.message, 500);
+  }
+};
+
+export const confirmStorefrontPayment = async (req, res) => {
+  try {
+    const { slug, orderNumber } = req.params;
+    const store = await Store.findOne({ slug, status: 'active' });
+    if (!store) return sendError(res, 'Store not found.', 404);
+
+    const order = await Order.findOne({ orderNumber, storeId: store._id });
+    if (!order) return sendError(res, 'Order not found.', 404);
+    if (order.paymentMethod !== 'UPI') return sendError(res, 'This order does not use UPI payment.', 400);
+    if (order.paymentStatus === 'paid') return sendSuccess(res, order, 'Payment is already confirmed.');
+
+    order.paymentStatus = 'paid';
+    order.timeline.push({
+      status: 'Payment Confirmed',
+      timestamp: new Date(),
+      note: 'UPI payment marked as paid by the customer. Merchant verification is still recommended.',
+      completed: true,
+    });
+    await order.save();
+
+    return sendSuccess(res, order, 'UPI payment confirmation received.');
+  } catch (error) {
     return sendError(res, error.message, 500);
   }
 };
