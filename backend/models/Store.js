@@ -70,6 +70,9 @@ const storeSchema = new mongoose.Schema(
       upiId: { type: String, default: '' },
       accountName: { type: String, default: '' },
       qrCodeImage: { type: String, default: '' },
+      bankName: { type: String, default: '' },
+      accountNumber: { type: String, default: '' },
+      ifscCode: { type: String, default: '' },
     },
 
     // Advanced & Security

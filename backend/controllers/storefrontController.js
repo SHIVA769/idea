@@ -2,6 +2,7 @@ import { Advertisement } from '../models/Advertisement.js';
 import { Store } from '../models/Store.js';
 import { Product, Category, Tax, Order, Customer, ShippingMethod, CompanyMessagingSettings } from '../models/ECommerce.js';
 import { StoreCoupon } from '../models/StoreCoupon.js';
+import { Notification } from '../models/Notification.js';
 import { Subscriber, ContactInquiry, LandingPageConfig, CustomPage } from '../models/LandingBuilder.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import { renderOrderMessage } from '../utils/templateEngine.js';
@@ -72,6 +73,9 @@ export const getStoreBySlug = async (req, res) => {
           upiId: store.paymentSettings?.upiId || '',
           accountName: store.paymentSettings?.accountName || '',
           qrCodeImage: store.paymentSettings?.qrCodeImage || '',
+          bankName: store.paymentSettings?.bankName || '',
+          accountNumber: store.paymentSettings?.accountNumber || '',
+          ifscCode: store.paymentSettings?.ifscCode || '',
         },
         pwaConfig: store.pwaConfig,
         customCSS: store.customCSS,
@@ -431,13 +435,41 @@ export const checkoutStoreOrder = async (req, res) => {
       appName: 'WhatsStore',
     };
 
+    const appUrl = process.env.APP_URL || 'http://localhost:5173';
+    const productImages = processedItems
+      .map((item) => item.image)
+      .filter(Boolean)
+      .map((image) => (/^https?:\/\//i.test(image) ? image : image.startsWith('/') ? `${appUrl}${image}` : ''))
+      .filter(Boolean);
+    const paymentDetails = paymentMethod === 'UPI' && store.paymentSettings?.upiEnabled
+      ? [
+          '',
+          'UPI PAYMENT DETAILS',
+          `UPI ID: ${store.paymentSettings.upiId}`,
+          store.paymentSettings.accountName ? `Account Name: ${store.paymentSettings.accountName}` : '',
+          store.paymentSettings.qrCodeImage && /^https?:\/\//i.test(store.paymentSettings.qrCodeImage)
+            ? `UPI QR: ${store.paymentSettings.qrCodeImage}`
+            : '',
+        ].filter(Boolean).join('\n')
+      : '';
+    const bankDetails = store.paymentSettings?.bankName || store.paymentSettings?.accountNumber || store.paymentSettings?.ifscCode
+      ? [
+          '',
+          'BANK TRANSFER DETAILS',
+          store.paymentSettings.bankName ? `Bank: ${store.paymentSettings.bankName}` : '',
+          store.paymentSettings.accountName ? `Account Name: ${store.paymentSettings.accountName}` : '',
+          store.paymentSettings.accountNumber ? `Account Number: ${store.paymentSettings.accountNumber}` : '',
+          store.paymentSettings.ifscCode ? `IFSC: ${store.paymentSettings.ifscCode}` : '',
+        ].filter(Boolean).join('\n')
+      : '';
+
     const whatsappMessage = renderOrderMessage({
       template: messaging?.messageTemplate || '',
       itemFormat: messaging?.itemVariableFormat || '',
       orderData: formattedOrderData,
       items: processedItems,
       channel: 'whatsapp',
-    });
+    }) + (productImages.length ? `\n\nPRODUCT IMAGES\n${productImages.join('\n')}` : '') + paymentDetails + bankDetails;
 
     order.whatsappPayload = whatsappMessage;
     await order.save();
@@ -524,6 +556,14 @@ export const confirmStorefrontPayment = async (req, res) => {
       completed: true,
     });
     await order.save();
+
+    await Notification.create({
+      storeId: store._id,
+      type: 'payment_confirmed',
+      title: 'Payment Confirmed',
+      message: `${order.customerName} confirmed UPI payment of ₹${Number(order.total || 0).toFixed(2)} for order #${order.orderNumber}. Please verify in your bank/UPI app before fulfilling.`,
+      orderId: order._id,
+    });
 
     return sendSuccess(res, order, 'UPI payment confirmation received.');
   } catch (error) {

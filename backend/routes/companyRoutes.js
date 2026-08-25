@@ -53,6 +53,8 @@ import {
   sendCompanyTemplateEmail,
   createWebhook,
   deleteWebhook,
+  getCompanyNotifications,
+  markCompanyNotificationRead,
 } from '../controllers/companyController.js';
 import { authenticate, requireRole, requireCompanyScope, requirePermission } from '../middlewares/auth.js';
 import { checkStoreLimit, checkProductLimit, checkUserLimit } from '../middlewares/planLimits.js';
@@ -65,6 +67,8 @@ router.use(authenticate, requireRole([ROLES.SUPER_ADMIN, ROLES.COMPANY_OWNER, RO
 
 // Dashboard
 router.get('/dashboard', requirePermission('dashboard.view'), getCompanyDashboardStats);
+router.get('/notifications', requirePermission('orders.view'), getCompanyNotifications);
+router.patch('/notifications/:id/read', requirePermission('orders.view'), markCompanyNotificationRead);
 
 // Stores
 router.get('/stores', requirePermission('stores.view'), getStores);

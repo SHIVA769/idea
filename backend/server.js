@@ -12,7 +12,6 @@ import { connectDB } from './config/db.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { User } from './models/User.js';
 import { seedDatabase } from './seeds/seedData.js';
-import { verifySMTPConnection } from './services/mailer.js';
 
 // Routes
 import authRoutes from './routes/authRoutes.js';
@@ -64,8 +63,6 @@ connectDB().then(async (conn) => {
     }
   }
 
-  // Verify SMTP Connection at startup
-  await verifySMTPConnection();
 }).catch((error) => {
   console.error(`[Startup Error] ${error.message}`);
 });

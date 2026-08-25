@@ -10,6 +10,7 @@ import { PlanOrder } from '../models/PlanOrder.js';
 import { PlatformCoupon } from '../models/PlatformCoupon.js';
 import { ReferredUser, PayoutRequest, ReferralSettings } from '../models/Referral.js';
 import { SystemSettings, BrandSettings, CurrencySettings, EmailSettings } from '../models/Settings.js';
+import { Notification } from '../models/Notification.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import { encryptSecret, maskSecret } from '../utils/crypto.js';
 import { generateOrderInvoicePDF } from '../services/pdfInvoiceService.js';
@@ -19,6 +20,45 @@ import { ROLES, PERMISSION_MODULES, STORE_THEMES } from '../config/constants.js'
 
 // Helper to extract effective companyId
 const getCompanyId = (req) => req.impersonatedCompanyId || req.effectiveCompanyId || req.user?.companyId;
+const getAccessibleStoreIds = async (req) => {
+  const companyId = getCompanyId(req);
+  if (req.user?.role === ROLES.STAFF && req.user.storeId) {
+    const store = await Store.findOne({ _id: req.user.storeId, companyId }).select('_id');
+    return store ? [store._id] : [];
+  }
+  const stores = await Store.find({ companyId }).select('_id');
+  return stores.map((store) => store._id);
+};
+
+export const getCompanyNotifications = async (req, res) => {
+  try {
+    const { unread } = req.query;
+    const query = { storeId: { $in: await getAccessibleStoreIds(req) } };
+    if (unread === 'true') query.read = false;
+
+    const notifications = await Notification.find(query)
+      .populate('orderId', 'orderNumber total paymentMethod paymentStatus customerName timeline')
+      .sort({ createdAt: -1 })
+      .limit(50);
+    return sendSuccess(res, notifications);
+  } catch (error) {
+    return sendError(res, error.message, 500);
+  }
+};
+
+export const markCompanyNotificationRead = async (req, res) => {
+  try {
+    const notification = await Notification.findOneAndUpdate(
+      { _id: req.params.id, storeId: { $in: await getAccessibleStoreIds(req) } },
+      { read: true },
+      { new: true }
+    );
+    if (!notification) return sendError(res, 'Notification not found.', 404);
+    return sendSuccess(res, notification, 'Notification marked as read.');
+  } catch (error) {
+    return sendError(res, error.message, 500);
+  }
+};
 
 // ==========================================
 // 5.15 Store Owner Dashboard
@@ -36,26 +76,26 @@ export const getCompanyDashboardStats = async (req, res) => {
     const stores = await Store.find({ companyId });
     const currentStore = storeId && storeId !== 'all' ? stores.find((s) => s._id.toString() === storeId) : stores[0];
 
-    const totalOrders = await Order.countDocuments(storeQuery);
-    const totalProducts = await Product.countDocuments(storeQuery);
-    const totalCustomers = await Customer.countDocuments(storeQuery);
-
-    const orders = await Order.find(storeQuery);
-    const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
-
-    // Recent orders
-    const recentOrders = await Order.find(storeQuery).sort({ createdAt: -1 }).limit(5);
-
-    // Top products
-    const topProducts = await Product.find(storeQuery).sort({ soldCount: -1, createdAt: -1 }).limit(5);
+    const [orderCount, productCount, customerCount, revenueSummary, recentOrders, topProducts] = await Promise.all([
+      Order.countDocuments(storeQuery),
+      Product.countDocuments(storeQuery),
+      Customer.countDocuments(storeQuery),
+      Order.aggregate([
+        { $match: storeQuery },
+        { $group: { _id: null, totalRevenue: { $sum: '$total' } } },
+      ]),
+      Order.find(storeQuery).sort({ createdAt: -1 }).limit(5),
+      Product.find(storeQuery).sort({ soldCount: -1, createdAt: -1 }).limit(5),
+    ]);
+    const totalRevenue = revenueSummary[0]?.totalRevenue || 0;
 
     return sendSuccess(res, {
       stores,
       currentStore,
       summaryCards: {
-        totalOrders,
-        totalProducts,
-        totalCustomers,
+        totalOrders: orderCount,
+        totalProducts: productCount,
+        totalCustomers: customerCount,
         totalRevenue: `$${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       },
       recentOrders,
