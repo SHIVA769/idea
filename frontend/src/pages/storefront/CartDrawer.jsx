@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, X, Plus, Minus, Trash2, Tag, ArrowRight, Check } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { formatCurrency } from '../../utils/currency';
 
 export const CartDrawer = ({ storeSlug, themeConfig }) => {
   const {
@@ -92,7 +93,7 @@ export const CartDrawer = ({ storeSlug, themeConfig }) => {
                       <span className="text-[10px] text-slate-400 block">{item.variant}</span>
                     )}
                     <span className="font-mono font-bold text-slate-700 dark:text-slate-300 mt-1 block">
-                      ${item.price}
+                      {formatCurrency(item.price)}
                     </span>
 
                     {/* Quantity Controls */}
@@ -124,7 +125,7 @@ export const CartDrawer = ({ storeSlug, themeConfig }) => {
                   </div>
 
                   <span className="font-mono font-black text-sm text-slate-900 dark:text-white">
-                    ${(Number(item.price || 0) * Number(item.quantity || 0)).toFixed(2)}
+                    {formatCurrency(Number(item.price || 0) * Number(item.quantity || 0))}
                   </span>
                 </div>
               ))
@@ -139,7 +140,7 @@ export const CartDrawer = ({ storeSlug, themeConfig }) => {
                 <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center justify-between">
                   <div className="flex items-center space-x-1.5 text-emerald-700 dark:text-emerald-300 font-semibold font-mono">
                     <Tag className="w-3.5 h-3.5" />
-                    <span>{appliedCoupon.code} applied (-${discountAmount.toFixed(2)})</span>
+                    <span>{appliedCoupon.code} applied (-{formatCurrency(discountAmount)})</span>
                   </div>
                   <button onClick={removeCoupon} className="text-emerald-700 hover:text-rose-600 text-[10px] font-bold">
                     Remove
@@ -168,17 +169,17 @@ export const CartDrawer = ({ storeSlug, themeConfig }) => {
               <div className="space-y-1.5 font-mono pt-1 text-slate-600 dark:text-slate-400">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>{formatCurrency(subtotal)}</span>
                 </div>
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-emerald-600 font-bold">
                     <span>Discount:</span>
-                    <span>-${discountAmount.toFixed(2)}</span>
+                    <span>-{formatCurrency(discountAmount)}</span>
                   </div>
                 )}
                 <div className="pt-2 border-t flex justify-between font-black text-sm text-slate-900 dark:text-white">
                   <span>Estimated Total:</span>
-                  <span>${finalTotal.toFixed(2)}</span>
+                  <span>{formatCurrency(finalTotal)}</span>
                 </div>
               </div>
 

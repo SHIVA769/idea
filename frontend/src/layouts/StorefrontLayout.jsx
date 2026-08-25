@@ -322,7 +322,7 @@ export const StorefrontLayout = () => {
 
   return (
     <StorefrontCatalogContext.Provider value={catalogContext}>
-      <div className={`min-h-screen ${themeConfig.bgPage} text-slate-900 flex flex-col transition-colors duration-300 font-sans ${isWhatsAppStore ? 'theme-whatsapp-store' : ''}`}>
+      <div className={`storefront-theme-shell min-h-screen ${themeConfig.bgPage} ${themeConfig.id} text-slate-900 flex flex-col transition-colors duration-300 font-sans ${isWhatsAppStore ? 'theme-whatsapp-store' : ''}`}>
         {isPreviewMode && (
           <div className="bg-amber-500 text-white text-[11px] font-bold tracking-wide uppercase text-center py-2 px-4">
             Live storefront preview • no sign-in required
@@ -356,7 +356,7 @@ export const StorefrontLayout = () => {
             )}
 
             <header className={`sticky top-0 z-30 ${themeConfig.headerBg} transition-all`}>
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4">
+              <div className="max-w-7xl mx-auto flex h-20 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
                 <Link to={`/store/${slug}`} className="flex items-center space-x-3 group">
                   {storeData?.logo ? (
                     <img src={storeData.logo} alt={storeData.name} className="h-10 w-auto object-contain rounded-md" />

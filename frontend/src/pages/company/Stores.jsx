@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Smartphone,
   Layers,
+  CreditCard,
 } from 'lucide-react';
 import { Tabs } from '../../components/common/Tabs';
 import { Modal } from '../../components/common/Modal';
@@ -50,6 +51,12 @@ export const Stores = () => {
       position: 'bottom-right',
       showOnMobile: true,
       showOnDesktop: true,
+    },
+    paymentSettings: {
+      upiEnabled: false,
+      upiId: '',
+      accountName: '',
+      qrCodeImage: '',
     },
     pwaSettings: {
       enabled: true,
@@ -140,6 +147,7 @@ export const Stores = () => {
         showOnMobile: true,
         showOnDesktop: true,
       },
+      paymentSettings: store.paymentSettings || { upiEnabled: false, upiId: '', accountName: '', qrCodeImage: '' },
       pwaSettings: store.pwaSettings || { enabled: true, appName: store.name, shortName: 'Store', themeColor: '#0284c7', backgroundColor: '#ffffff' },
       customCSS: store.customCSS || '',
       customJS: store.customJS || '',
@@ -151,7 +159,8 @@ export const Stores = () => {
   const formTabs = [
     { id: 'basic', label: '1. Basic Info & Theme' },
     { id: 'whatsapp', label: '2. WhatsApp Widget' },
-    { id: 'pwa', label: '3. PWA & Advanced' },
+    { id: 'payment', label: '3. Payments' },
+    { id: 'pwa', label: '4. PWA & Advanced' },
   ];
 
   return (
@@ -174,6 +183,7 @@ export const Stores = () => {
               copyrightText: '© WhatsStore. All rights reserved.',
               address: { street: '', country: 'United States', state: 'California', city: 'Los Angeles', postalCode: '90001' },
               whatsappWidget: { enabled: true, phoneNumber: '+14155552671', defaultMessage: 'Hi! I need help.', position: 'bottom-right', showOnMobile: true, showOnDesktop: true },
+              paymentSettings: { upiEnabled: false, upiId: '', accountName: '', qrCodeImage: '' },
               pwaSettings: { enabled: true, appName: 'My Store', shortName: 'Store', themeColor: '#0284c7', backgroundColor: '#ffffff' },
               customCSS: '',
               customJS: '',
@@ -516,7 +526,85 @@ export const Stores = () => {
               </div>
             )}
 
-            {/* Tab 3: PWA & Advanced */}
+            {/* Tab 3: Store Payment Methods */}
+            {activeFormTab === 'payment' && (
+              <div className="space-y-4 text-xs">
+                <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-emerald-800">
+                  <CreditCard className="mt-0.5 h-4 w-4 shrink-0" />
+                  <p>Customers will see these details at checkout and pay you directly. Confirm UPI payments manually before processing the order.</p>
+                </div>
+
+                <label className="flex items-center space-x-2 font-bold text-slate-900 dark:text-white">
+                  <input
+                    type="checkbox"
+                    checked={storeForm.paymentSettings?.upiEnabled}
+                    onChange={(e) => setStoreForm({ ...storeForm, paymentSettings: { ...storeForm.paymentSettings, upiEnabled: e.target.checked } })}
+                    className="rounded text-emerald-600"
+                  />
+                  <span>Accept UPI payments</span>
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold mb-1">UPI ID *</label>
+                    <input
+                      type="text"
+                      required={storeForm.paymentSettings?.upiEnabled}
+                      placeholder="yourname@upi"
+                      value={storeForm.paymentSettings?.upiId || ''}
+                      onChange={(e) => setStoreForm({ ...storeForm, paymentSettings: { ...storeForm.paymentSettings, upiId: e.target.value.trim() } })}
+                      className="w-full p-2 bg-slate-50 dark:bg-slate-800 border rounded-lg font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold mb-1">Account name</label>
+                    <input
+                      type="text"
+                      placeholder="Name shown to customers"
+                      value={storeForm.paymentSettings?.accountName || ''}
+                      onChange={(e) => setStoreForm({ ...storeForm, paymentSettings: { ...storeForm.paymentSettings, accountName: e.target.value } })}
+                      className="w-full p-2 bg-slate-50 dark:bg-slate-800 border rounded-lg"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-1">UPI QR code</label>
+                  <input
+                    type="text"
+                    placeholder="https://example.com/upi-qr.png"
+                    value={storeForm.paymentSettings?.qrCodeImage?.startsWith('data:') ? '' : storeForm.paymentSettings?.qrCodeImage || ''}
+                    onChange={(e) => setStoreForm({ ...storeForm, paymentSettings: { ...storeForm.paymentSettings, qrCodeImage: e.target.value.trim() } })}
+                    className="w-full p-2 bg-slate-50 dark:bg-slate-800 border rounded-lg"
+                  />
+                  <div className="mt-2 flex items-center gap-2">
+                    <label className="inline-flex cursor-pointer items-center rounded-lg bg-slate-100 px-2.5 py-1.5 text-[10px] font-bold text-slate-700 hover:bg-slate-200">
+                      Choose QR image
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 2 * 1024 * 1024) {
+                            alert('QR image must be smaller than 2MB.');
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onload = () => setStoreForm((previous) => ({ ...previous, paymentSettings: { ...previous.paymentSettings, qrCodeImage: reader.result } }));
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                    </label>
+                    <span className="text-[10px] text-slate-400">or paste an image URL</span>
+                  </div>
+                  {storeForm.paymentSettings?.qrCodeImage ? <img src={storeForm.paymentSettings.qrCodeImage} alt="UPI QR preview" className="mt-3 h-32 w-32 rounded-lg border border-slate-200 bg-white object-contain p-1" /> : null}
+                </div>
+              </div>
+            )}
+
+            {/* Tab 4: PWA & Advanced */}
             {activeFormTab === 'pwa' && (
               <div className="space-y-4 text-xs">
                 <label className="flex items-center space-x-2 font-bold text-slate-900 dark:text-white">

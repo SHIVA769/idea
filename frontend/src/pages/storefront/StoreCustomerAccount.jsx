@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AddressCascade } from '../../components/common/AddressCascade';
+import { formatCurrency } from '../../utils/currency';
 import { Modal } from '../../components/common/Modal';
 import api from '../../api/axios';
 import { downloadOrderPdf } from '../../utils/orderPdf';
@@ -421,7 +422,7 @@ export const StoreCustomerAccount = () => {
 
                   <div className="flex items-center space-x-4">
                     <span className="font-mono font-extrabold text-base text-slate-900 dark:text-white">
-                      ${o.total?.toFixed(2)}
+                      {formatCurrency(o.total)}
                     </span>
                     <button
                       onClick={() => {
@@ -588,9 +589,9 @@ export const StoreCustomerAccount = () => {
                   <div key={idx} className="flex justify-between items-center py-1 border-b border-slate-50">
                     <div>
                       <p className="font-bold text-slate-800">{item.productName}</p>
-                      <p className="text-[10px] text-slate-400">Qty: {item.quantity} × ${item.price?.toFixed(2)}</p>
+                      <p className="text-[10px] text-slate-400">Qty: {item.quantity} × {formatCurrency(item.price)}</p>
                     </div>
-                    <span className="font-mono font-bold">${item.lineTotal?.toFixed(2)}</span>
+                    <span className="font-mono font-bold">{formatCurrency(item.lineTotal)}</span>
                   </div>
                 ))}
               </div>
@@ -599,19 +600,19 @@ export const StoreCustomerAccount = () => {
             <div className="pt-2 border-t border-slate-100 space-y-1">
               <div className="flex justify-between text-slate-500">
                 <span>Subtotal</span>
-                <span className="font-mono">${selectedOrder.subtotal?.toFixed(2)}</span>
+                <span className="font-mono">{formatCurrency(selectedOrder.subtotal)}</span>
               </div>
               <div className="flex justify-between text-slate-500">
                 <span>Tax</span>
-                <span className="font-mono">${selectedOrder.taxTotal?.toFixed(2)}</span>
+                <span className="font-mono">{formatCurrency(selectedOrder.taxTotal)}</span>
               </div>
               <div className="flex justify-between text-slate-500">
                 <span>Shipping</span>
-                <span className="font-mono">${selectedOrder.shippingCost?.toFixed(2)}</span>
+                <span className="font-mono">{formatCurrency(selectedOrder.shippingCost)}</span>
               </div>
               <div className="flex justify-between font-extrabold text-slate-900 text-sm pt-1 border-t border-slate-100">
                 <span>Total</span>
-                <span className="font-mono">${selectedOrder.total?.toFixed(2)}</span>
+                <span className="font-mono">{formatCurrency(selectedOrder.total)}</span>
               </div>
             </div>
           </div>

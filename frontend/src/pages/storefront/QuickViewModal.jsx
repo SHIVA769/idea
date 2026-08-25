@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ShoppingBag, MessageCircle, X, Plus, Minus, Check, Star } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { Modal } from '../../components/common/Modal';
+import { formatCurrency } from '../../utils/currency';
 
 export const QuickViewModal = ({ isOpen, onClose, product, storeWhatsAppPhone }) => {
   const { addToCart, setIsDrawerOpen } = useCart();
@@ -43,7 +44,7 @@ export const QuickViewModal = ({ isOpen, onClose, product, storeWhatsAppPhone })
   const handleWhatsAppDirectOrder = () => {
     const cleanPhone = (storeWhatsAppPhone || '+14155552671').replace(/[^0-9]/g, '');
     const price = product.salePrice > 0 ? product.salePrice : product.price;
-    const msg = `Hi! I want to order "${product.name}" (Qty: ${quantity}${selectedVariant ? `, Option: ${selectedVariant}` : ''}) for $${(price * quantity).toFixed(2)}.`;
+    const msg = `Hi! I want to order "${product.name}" (Qty: ${quantity}${selectedVariant ? `, Option: ${selectedVariant}` : ''}) for ${formatCurrency(price * quantity)}.`;
     window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`, '_blank');
   };
 
@@ -87,10 +88,10 @@ export const QuickViewModal = ({ isOpen, onClose, product, storeWhatsAppPhone })
             {/* Price */}
             <div className="flex items-baseline space-x-2">
               <span className="text-2xl font-black text-slate-900 dark:text-white font-mono">
-                ${product.salePrice > 0 ? product.salePrice : product.price}
+                {formatCurrency(product.salePrice > 0 ? product.salePrice : product.price)}
               </span>
               {product.salePrice > 0 && (
-                <span className="text-sm text-slate-400 line-through font-mono">${product.price}</span>
+                <span className="text-sm text-slate-400 line-through font-mono">{formatCurrency(product.price)}</span>
               )}
             </div>
 

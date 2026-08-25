@@ -14,6 +14,7 @@ import {
   WhatsAppProductCard,
 } from './StorefrontSections';
 import api from '../../api/axios';
+import { formatCurrency } from '../../utils/currency';
 
 export const StorefrontHome = () => {
   const { slug } = useParams();
@@ -193,27 +194,32 @@ export const StorefrontHome = () => {
 
   /* Default theme layout (unchanged functionality) */
   return (
-    <div className="space-y-10 text-left">
-      <div className={`relative rounded-3xl overflow-hidden shadow-lg ${themeConfig.heroGradient} p-8 sm:p-12 text-white flex flex-col md:flex-row items-center justify-between gap-8`}>
-        <div className="max-w-xl space-y-4 z-10">
-          <div className="inline-flex items-center space-x-1.5 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold tracking-wide uppercase">
+    <div className="space-y-8 text-left">
+      <div className={`storefront-hero relative isolate overflow-hidden rounded-[2rem] shadow-xl ${themeConfig.heroGradient} px-6 py-8 sm:px-10 sm:py-12 lg:px-14 lg:py-14 text-white flex flex-col md:flex-row items-center justify-between gap-10`}>
+        <div className="storefront-hero-glow absolute -right-20 -top-24 h-72 w-72 rounded-full border border-white/10 bg-white/5 blur-2xl" />
+        <div className="storefront-hero-copy relative z-10 max-w-xl space-y-5">
+          <div className="storefront-hero-badge inline-flex items-center space-x-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold tracking-[0.16em] uppercase backdrop-blur-md">
             <Sparkles className="w-3.5 h-3.5" />
             <span>{themeConfig.badgeText || 'Special Collection'}</span>
           </div>
-          <h1 className={`text-3xl sm:text-5xl font-black tracking-tight leading-tight ${themeConfig.fontHeading}`}>
+          <h1 className={`storefront-hero-title text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.02] ${themeConfig.fontHeading}`}>
             {storeData?.name || 'Welcome to Our Store'}
           </h1>
-          <p className="text-sm sm:text-base opacity-90 leading-relaxed">
+          <p className="storefront-hero-description max-w-lg text-sm sm:text-base opacity-80 leading-relaxed">
             {storeData?.welcomeMessage || 'Browse our catalog and enjoy instant, frictionless WhatsApp checkout.'}
           </p>
+          <div className="storefront-hero-pills flex flex-wrap items-center gap-3 pt-1 text-[11px] font-semibold uppercase tracking-wider text-white/70">
+            <span className="rounded-full bg-white/10 px-3 py-1.5">Curated products</span>
+            <span className="rounded-full bg-white/10 px-3 py-1.5">Fast delivery</span>
+          </div>
         </div>
 
         {themeConfig.heroImage && (
-          <div className="w-full md:w-1/2 flex justify-center z-10">
+          <div className="storefront-hero-image relative z-10 flex w-full justify-center md:w-2/5">
             <img
               src={storeData?.bannerImage || themeConfig.heroImage}
               alt="Hero Showcase"
-              className="max-h-72 object-cover rounded-2xl shadow-2xl transform hover:scale-105 transition-transform duration-500"
+              className="aspect-square w-full max-w-[290px] rounded-[1.5rem] border border-white/20 bg-white/10 object-cover p-2 shadow-2xl transition-transform duration-500 hover:scale-[1.03]"
             />
           </div>
         )}
@@ -221,9 +227,13 @@ export const StorefrontHome = () => {
 
       <StorefrontAdvertisements advertisements={storeData?.advertisements} />
 
-      <div className="space-y-4">
+      <div className={`storefront-collection-panel space-y-4 rounded-2xl border p-4 shadow-sm backdrop-blur-sm sm:p-5 ${themeConfig.isDark ? 'border-white/10 bg-slate-900/75' : 'border-slate-200/70 bg-white/70'}`}>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Browse collection</p>
+            <p className="mt-1 text-lg font-bold text-slate-900 dark:text-white">Find something you&apos;ll love</p>
+          </div>
+          <div className="relative w-full sm:max-w-sm">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
@@ -234,12 +244,11 @@ export const StorefrontHome = () => {
             />
           </div>
 
-          <span className="text-xs text-slate-500 font-medium">
-            Showing {products.length} products
-          </span>
+          <span className="text-xs text-slate-500 font-medium sm:hidden">Showing {products.length} products</span>
         </div>
 
-        <div className="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
           <button
             onClick={() => setSelectedCategory('all')}
             className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
@@ -263,7 +272,19 @@ export const StorefrontHome = () => {
               {c.name}
             </button>
           ))}
+          </div>
+          <span className="hidden shrink-0 text-xs font-medium text-slate-500 sm:inline">{products.length} products</span>
         </div>
+      </div>
+
+      <div className="storefront-arrivals-heading flex items-end justify-between gap-4 pt-1">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">The collection</p>
+          <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white">Latest arrivals</h2>
+        </div>
+        <span className="hidden rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300 sm:inline-flex">
+          {products.length} {products.length === 1 ? 'item' : 'items'}
+        </span>
       </div>
 
       {loading ? (
@@ -278,12 +299,13 @@ export const StorefrontHome = () => {
           <p className="text-xs text-slate-400 mt-1">Try refining your search query or selecting a different category.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map((product) => (
+        <div className="storefront-product-grid grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {products.map((product, index) => (
             <div
               key={product._id}
               onClick={() => openQuickView(product)}
-              className={`group cursor-pointer overflow-hidden transition-all duration-300 ${themeConfig.productCard} ${themeConfig.cardRadius || 'rounded-2xl'} flex flex-col justify-between`}
+              style={{ '--product-index': index }}
+              className={`storefront-product-card group cursor-pointer overflow-hidden transition-all duration-300 ${themeConfig.productCard} ${themeConfig.cardRadius || 'rounded-2xl'} flex flex-col justify-between`}
             >
               <div>
                 <div className="px-4 pt-4 pb-2">
@@ -299,7 +321,7 @@ export const StorefrontHome = () => {
                   <img
                     src={product.thumbnail || 'https://via.placeholder.com/400'}
                     alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className={`h-full w-full transition-transform duration-500 group-hover:scale-105 ${themeConfig.isDark ? 'bg-slate-950/60 object-contain p-6' : 'object-cover'}`}
                   />
 
                   {product.badge && (
@@ -334,11 +356,11 @@ export const StorefrontHome = () => {
               <div className="p-4 pt-0 flex items-center justify-between">
                 <div className="flex items-baseline space-x-1.5">
                   <span className={`text-base font-black font-mono ${themeConfig.isDark ? 'text-white' : 'text-slate-900'}`}>
-                    ${product.salePrice > 0 ? product.salePrice : product.price}
+                    {formatCurrency(product.salePrice > 0 ? product.salePrice : product.price)}
                   </span>
                   {product.salePrice > 0 && (
                     <span className="text-xs text-slate-400 line-through font-mono">
-                      ${product.price}
+                      {formatCurrency(product.price)}
                     </span>
                   )}
                 </div>

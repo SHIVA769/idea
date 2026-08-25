@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 
 // Layouts
 import { AuthLayout } from './layouts/AuthLayout';
@@ -49,6 +50,7 @@ const CompanySettings = lazy(() => import('./pages/company/CompanySettings').the
 // Storefront Pages
 const StorefrontHome = lazy(() => import('./pages/storefront/StorefrontHome').then((module) => ({ default: module.StorefrontHome })));
 const StorefrontCheckout = lazy(() => import('./pages/storefront/StorefrontCheckout').then((module) => ({ default: module.StorefrontCheckout })));
+const StorefrontPayment = lazy(() => import('./pages/storefront/StorefrontPayment').then((module) => ({ default: module.StorefrontPayment })));
 const OrderSuccess = lazy(() => import('./pages/storefront/OrderSuccess').then((module) => ({ default: module.OrderSuccess })));
 const StoreCustomerAccount = lazy(() => import('./pages/storefront/StoreCustomerAccount').then((module) => ({ default: module.StoreCustomerAccount })));
 
@@ -57,6 +59,15 @@ const PageLoader = () => (
     Loading...
   </div>
 );
+
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) return <PageLoader />;
+  if (!user) return <Navigate to="/login" replace />;
+
+  return children;
+};
 
 function App() {
   return (
@@ -76,7 +87,7 @@ function App() {
         </Route>
 
         {/* Super Admin Routes */}
-        <Route path="/admin" element={<SuperAdminLayout />}>
+        <Route path="/admin" element={<ProtectedRoute><SuperAdminLayout /></ProtectedRoute>}>
           <Route index element={<SuperAdminDashboard />} />
           <Route path="companies" element={<Companies />} />
           <Route path="advertisements" element={<Advertisements />} />
@@ -90,7 +101,7 @@ function App() {
         </Route>
 
         {/* Company / Merchant Routes */}
-        <Route path="/company" element={<CompanyLayout />}>
+        <Route path="/company" element={<ProtectedRoute><CompanyLayout /></ProtectedRoute>}>
           <Route index element={<CompanyDashboard />} />
           <Route path="stores" element={<Stores />} />
           <Route path="products" element={<Products />} />
@@ -112,6 +123,7 @@ function App() {
           <Route index element={<StorefrontHome />} />
           <Route path="preview" element={<StorefrontHome />} />
           <Route path="checkout" element={<StorefrontCheckout />} />
+          <Route path="payment/:orderNumber" element={<StorefrontPayment />} />
           <Route path="order-success/:orderId" element={<OrderSuccess />} />
           <Route path="customer/login" element={<StoreCustomerAccount />} />
           <Route path="customer/profile" element={<StoreCustomerAccount />} />

@@ -17,11 +17,14 @@ import {
   Upload,
   MessageCircle,
   AlertCircle,
+  Copy,
+  QrCode,
 } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { AddressCascade } from '../../components/common/AddressCascade';
 import api from '../../api/axios';
+import { formatCurrency } from '../../utils/currency';
 
 export const StorefrontCheckout = () => {
   const { slug } = useParams();
@@ -67,6 +70,7 @@ export const StorefrontCheckout = () => {
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const paymentSettings = storeData?.paymentSettings;
 
   // Fetch Shipping Methods
   useEffect(() => {
@@ -159,6 +163,19 @@ export const StorefrontCheckout = () => {
 
       if (res.data?.success) {
         const orderData = res.data.data;
+
+        if (paymentMethod === 'UPI') {
+          navigate(`/store/${slug}/payment/${orderData.order.orderNumber}`, {
+            state: {
+              order: orderData.order,
+              paymentSettings,
+              whatsappChatUrl: orderData.whatsappChatUrl,
+              whatsappMessage: orderData.whatsappMessage,
+            },
+          });
+          return;
+        }
+
         clearCart();
 
         // Redirect to success screen with state
@@ -351,7 +368,7 @@ export const StorefrontCheckout = () => {
                             </div>
                           </div>
                           <span className="text-xs font-extrabold font-mono text-slate-900 dark:text-white">
-                            {m.cost > 0 ? `$${m.cost.toFixed(2)}` : 'FREE'}
+                            {m.cost > 0 ? formatCurrency(m.cost) : 'FREE'}
                           </span>
                         </div>
                       );
@@ -369,7 +386,7 @@ export const StorefrontCheckout = () => {
                     <div className="flex items-center space-x-2">
                       <Tag className="w-4 h-4 text-emerald-600" />
                       <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                        Coupon Code: <span className="font-mono uppercase">{appliedCoupon.code}</span> (-${discountAmount.toFixed(2)})
+                        Coupon Code: <span className="font-mono uppercase">{appliedCoupon.code}</span> (-{formatCurrency(discountAmount)})
                       </span>
                     </div>
                     <button
@@ -439,6 +456,9 @@ export const StorefrontCheckout = () => {
                   { id: 'WhatsApp', title: 'Order via WhatsApp Chat', desc: 'Confirm order details & receipt directly on WhatsApp' },
                   { id: 'Bank Transfer', title: 'Bank Direct Transfer', desc: 'Transfer to store bank account & upload receipt' },
                   { id: 'Stripe', title: 'Credit / Debit Card (Stripe)', desc: 'Instant secure online card checkout' },
+                  ...(paymentSettings?.upiEnabled && paymentSettings.upiId
+                    ? [{ id: 'UPI', title: 'UPI Payment', desc: 'Pay directly to the store using UPI or scan the QR code' }]
+                    : []),
                 ].map((pm) => {
                   const isSelected = paymentMethod === pm.id;
                   return (
@@ -462,6 +482,36 @@ export const StorefrontCheckout = () => {
                   );
                 })}
               </div>
+
+              {paymentMethod === 'UPI' && paymentSettings?.upiEnabled && (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-emerald-800">
+                    <QrCode className="w-4 h-4" />
+                    <p className="text-xs font-extrabold">Pay the store owner via UPI</p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-center gap-4">
+                    {paymentSettings.qrCodeImage ? (
+                      <img src={paymentSettings.qrCodeImage} alt="Store owner UPI QR code" className="w-36 h-36 rounded-xl border border-emerald-200 bg-white object-contain p-2" />
+                    ) : null}
+                    <div className="text-center sm:text-left space-y-1">
+                      <p className="text-[11px] text-emerald-700">UPI ID</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-mono text-sm font-extrabold text-slate-900">{paymentSettings.upiId}</p>
+                        <button
+                          type="button"
+                          title="Copy UPI ID"
+                          onClick={() => navigator.clipboard?.writeText(paymentSettings.upiId)}
+                          className="p-1.5 rounded-lg bg-white text-emerald-700 hover:bg-emerald-100"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      {paymentSettings.accountName && <p className="text-[11px] text-slate-600">Account name: {paymentSettings.accountName}</p>}
+                      <p className="text-[11px] text-slate-600">After paying, place the order. The store owner will verify your payment.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Order Notes (Optional)</label>
@@ -493,7 +543,7 @@ export const StorefrontCheckout = () => {
                     <span>Processing Order...</span>
                   ) : (
                     <>
-                      <span>Place Order (${finalTotal.toFixed(2)})</span>
+                      <span>Place Order ({formatCurrency(finalTotal)})</span>
                       <CheckCircle2 className="w-4 h-4 ml-1" />
                     </>
                   )}
@@ -522,11 +572,11 @@ export const StorefrontCheckout = () => {
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-slate-900 dark:text-white truncate">{item.name}</p>
                     <p className="text-[10px] text-slate-400 font-mono">
-                      Qty: {item.quantity} × ${item.price.toFixed(2)}
+                      Qty: {item.quantity} × {formatCurrency(item.price)}
                     </p>
                   </div>
                   <span className="font-mono font-bold text-slate-900 dark:text-white">
-                    ${(item.quantity * item.price).toFixed(2)}
+                    {formatCurrency(item.quantity * item.price)}
                   </span>
                 </div>
               ))}
@@ -536,28 +586,28 @@ export const StorefrontCheckout = () => {
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2 text-xs">
               <div className="flex justify-between text-slate-500">
                 <span>Subtotal</span>
-                <span className="font-mono font-semibold">${subtotal.toFixed(2)}</span>
+                <span className="font-mono font-semibold">{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between text-slate-500">
                 <span>Tax</span>
-                <span className="font-mono font-semibold">${taxTotal.toFixed(2)}</span>
+                <span className="font-mono font-semibold">{formatCurrency(taxTotal)}</span>
               </div>
               <div className="flex justify-between text-slate-500">
                 <span>Shipping</span>
                 <span className="font-mono font-semibold">
-                  {shippingCost > 0 ? `$${shippingCost.toFixed(2)}` : 'FREE'}
+                  {shippingCost > 0 ? formatCurrency(shippingCost) : 'FREE'}
                 </span>
               </div>
               {discountAmount > 0 && (
                 <div className="flex justify-between text-emerald-600 font-bold">
                   <span>Discount</span>
-                  <span className="font-mono">-${discountAmount.toFixed(2)}</span>
+                  <span className="font-mono">-{formatCurrency(discountAmount)}</span>
                 </div>
               )}
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-baseline">
                 <span className="text-sm font-extrabold text-slate-900 dark:text-white">Total</span>
                 <span className="text-xl font-black font-mono text-slate-900 dark:text-white">
-                  ${finalTotal.toFixed(2)}
+                  {formatCurrency(finalTotal)}
                 </span>
               </div>
             </div>

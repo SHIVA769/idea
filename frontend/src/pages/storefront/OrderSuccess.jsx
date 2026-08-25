@@ -3,6 +3,7 @@ import { useOutletContext, useParams, useLocation, Link } from 'react-router-dom
 import { CheckCircle2, MessageCircle, Copy, Download, ShoppingBag, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { downloadOrderPdf } from '../../utils/orderPdf';
+import { formatCurrency } from '../../utils/currency';
 
 export const OrderSuccess = () => {
   const { slug } = useParams();
@@ -74,7 +75,7 @@ export const OrderSuccess = () => {
           <div className="text-right">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Total Amount</span>
             <p className="text-base font-black font-mono text-slate-900 dark:text-white">
-              ${orderData.total ? orderData.total.toFixed(2) : '0.00'}
+              {formatCurrency(orderData.total)}
             </p>
           </div>
         </div>

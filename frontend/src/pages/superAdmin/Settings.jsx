@@ -296,8 +296,8 @@ export const Settings = () => {
                   <span className="text-xs text-slate-400 block font-semibold">Live Price Format Preview:</span>
                   <span className="text-2xl font-black text-primary-600 font-mono">
                     {currencyForm.symbolPosition === 'after'
-                      ? `1,299${currencyForm.decimalSeparator || '.'}50${currencyForm.symbol || '$'}`
-                      : `${currencyForm.symbol || '$'}1,299${currencyForm.decimalSeparator || '.'}50`}
+                      ? `1,299${currencyForm.decimalSeparator || '.'}50${currencyForm.symbol || '₹'}`
+                      : `${currencyForm.symbol || '₹'}1,299${currencyForm.decimalSeparator || '.'}50`}
                   </span>
                 </div>
               </div>
@@ -307,7 +307,7 @@ export const Settings = () => {
                   <label className="block font-semibold mb-1">Default Symbol</label>
                   <input
                     type="text"
-                    value={currencyForm.symbol || '$'}
+                    value={currencyForm.symbol || '₹'}
                     onChange={(e) => setCurrencyForm({ ...currencyForm, symbol: e.target.value })}
                     className="w-full p-2 bg-slate-50 dark:bg-slate-800 border rounded-lg font-mono"
                   />

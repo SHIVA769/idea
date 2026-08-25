@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
+import { formatCurrency } from '../../utils/currency';
 
 const CATEGORY_ICON_MAP = [
   { match: /electronic|gadget|phone|audio|headphone/i, Icon: HeadphonesIcon },
@@ -287,7 +288,7 @@ export const StorefrontPromoBanner = ({ storeData, onShopNow }) => {
   const discountLabel = coupon
     ? coupon.discountType === 'percentage'
       ? `${coupon.discountValue}% OFF`
-      : `$${coupon.discountValue} OFF`
+      : `${formatCurrency(coupon.discountValue)} OFF`
     : '10% OFF';
   const couponCode = coupon?.code || 'WELCOME10';
 
@@ -358,7 +359,7 @@ export const WhatsAppProductCard = ({
   const handleWhatsAppOrder = (e) => {
     e.stopPropagation();
     const cleanPhone = (storeWhatsAppPhone || '+14155552671').replace(/[^0-9]/g, '');
-    const msg = `Hi! I want to order "${product.name}" for $${price.toFixed(2)}.`;
+    const msg = `Hi! I want to order "${product.name}" for ${formatCurrency(price)}.`;
     window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`, '_blank');
   };
 
@@ -411,9 +412,9 @@ export const WhatsAppProductCard = ({
           {product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : 'Out of stock'}
         </span>
         <div className="flex items-baseline gap-2 mb-3 mt-auto">
-          <span className={`text-lg font-black ${themeConfig?.isDark ? 'text-white' : ''}`} style={{ color: themeConfig?.isDark ? undefined : themeConfig?.primaryColor }}>${price}</span>
+          <span className={`text-lg font-black ${themeConfig?.isDark ? 'text-white' : ''}`} style={{ color: themeConfig?.isDark ? undefined : themeConfig?.primaryColor }}>{formatCurrency(price)}</span>
           {hasDiscount && (
-            <span className="text-xs text-slate-400 line-through">${product.price}</span>
+            <span className="text-xs text-slate-400 line-through">{formatCurrency(product.price)}</span>
           )}
         </div>
 

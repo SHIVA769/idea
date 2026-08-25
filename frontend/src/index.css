@@ -49,6 +49,24 @@
   --font-heading: 'Plus Jakarta Sans', sans-serif;
 }
 
+.theme-gadgets.storefront-theme-shell::before {
+  opacity: .5;
+}
+
+.theme-gadgets .storefront-product-card {
+  border-color: rgba(103, 232, 249, .2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 12px 30px rgba(0, 0, 0, .2);
+}
+
+.theme-gadgets .storefront-product-card::after {
+  background: linear-gradient(145deg, rgba(20, 32, 51, .98), rgba(9, 15, 28, .98));
+}
+
+.theme-gadgets .storefront-product-card:hover {
+  border-color: rgba(103, 232, 249, .55);
+  box-shadow: 0 20px 42px rgba(8, 145, 178, .2), inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+
 .theme-fashion {
   --primary: #18181b;
   --primary-hover: #27272a;
@@ -143,6 +161,52 @@
   .auth-demo { transition: transform .2s ease, background-color .2s ease, border-color .2s ease; }
   .auth-demo:hover { transform: translateY(-2px); background-color: rgba(15, 23, 42, .95); }
   .auth-referral { box-shadow: inset 3px 0 0 #34d399; }
+  .storefront-hero-copy { animation: storefront-hero-rise .75s ease-out both; }
+  .storefront-theme-shell { position: relative; isolation: isolate; overflow: hidden; }
+  .storefront-theme-shell::before { content: ''; position: absolute; inset: 0; z-index: 0; opacity: .34; background-image: var(--theme-background-pattern); background-size: var(--theme-background-size, 56px 56px); animation: theme-background-drift 24s linear infinite; pointer-events: none; }
+  .storefront-theme-shell > * { position: relative; z-index: 1; }
+  .storefront-hero::before { content: ''; position: absolute; inset: 0; z-index: 0; opacity: .16; background-image: linear-gradient(rgba(255, 255, 255, .16) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .16) 1px, transparent 1px); background-size: 42px 42px; mask-image: linear-gradient(115deg, transparent 8%, black 42%, transparent 92%); transform: perspective(500px) rotateX(58deg) scale(1.5) translateY(12%); transform-origin: center bottom; animation: storefront-grid-drift 16s linear infinite; pointer-events: none; }
+  .storefront-hero::after { content: ''; position: absolute; z-index: 1; top: -30%; left: -18%; width: 26%; height: 170%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .18), transparent); transform: rotate(24deg); animation: storefront-light-sweep 9s ease-in-out infinite; pointer-events: none; }
+  .storefront-hero-badge { animation: storefront-badge-in .65s .08s ease-out both; }
+  .storefront-hero-title { animation: storefront-hero-rise .75s .12s ease-out both; }
+  .storefront-hero-description { animation: storefront-hero-rise .75s .2s ease-out both; }
+  .storefront-hero-pills { animation: storefront-hero-rise .75s .28s ease-out both; }
+  .storefront-hero-image { animation: storefront-hero-float 6s ease-in-out infinite; }
+  .storefront-hero-glow { animation: storefront-glow 7s ease-in-out infinite; }
+  .storefront-collection-panel { animation: storefront-section-reveal .7s .18s ease-out both; }
+  .storefront-arrivals-heading { animation: storefront-section-reveal .7s .28s ease-out both; }
+  .storefront-product-grid > * { animation: storefront-product-reveal .65s calc(.34s + (var(--product-index) * .08s)) ease-out both; }
+  .storefront-product-card { position: relative; isolation: isolate; }
+  .storefront-product-card::before { content: ''; position: absolute; inset: -35%; z-index: -1; background: conic-gradient(from 180deg at 50% 50%, transparent 0deg, var(--storefront-card-glow, rgba(56, 189, 248, .18)) 70deg, transparent 125deg, var(--storefront-card-glow, rgba(56, 189, 248, .1)) 205deg, transparent 290deg); opacity: .38; animation: storefront-card-orbit 10s linear infinite; }
+  .storefront-product-card::after { content: ''; position: absolute; inset: 1px; z-index: -1; border-radius: inherit; background: var(--storefront-card-surface, rgba(15, 23, 42, .92)); opacity: .94; }
+  .storefront-product-card:hover { transform: translateY(-5px); box-shadow: 0 18px 34px var(--storefront-card-shadow, rgba(2, 132, 199, .2)); }
+  .theme-gadgets { --storefront-card-glow: rgba(56, 189, 248, .3); --storefront-card-surface: rgba(15, 23, 42, .96); --storefront-card-shadow: rgba(14, 165, 233, .25); }
+  .theme-home-decor { --storefront-card-glow: rgba(212, 163, 115, .28); --storefront-card-surface: rgba(255, 255, 255, .96); --storefront-card-shadow: rgba(147, 106, 74, .2); }
+  .theme-fashion { --storefront-card-glow: rgba(161, 161, 170, .25); --storefront-card-surface: rgba(255, 255, 255, .97); --storefront-card-shadow: rgba(24, 24, 27, .16); }
+  .theme-bakery { --storefront-card-glow: rgba(244, 63, 94, .22); --storefront-card-surface: rgba(255, 255, 255, .97); --storefront-card-shadow: rgba(225, 29, 72, .16); }
+  .theme-grocery { --storefront-card-glow: rgba(34, 197, 94, .24); --storefront-card-surface: rgba(255, 255, 255, .97); --storefront-card-shadow: rgba(22, 163, 74, .18); }
+  .theme-car-accessories { --storefront-card-glow: rgba(248, 113, 113, .3); --storefront-card-surface: rgba(26, 26, 30, .97); --storefront-card-shadow: rgba(220, 38, 38, .24); }
+  .theme-toys { --storefront-card-glow: rgba(245, 158, 11, .25); --storefront-card-surface: rgba(255, 255, 255, .97); --storefront-card-shadow: rgba(124, 58, 237, .16); }
+  .theme-whatsapp-store { --storefront-card-glow: rgba(37, 211, 102, .22); --storefront-card-surface: rgba(255, 255, 255, .98); --storefront-card-shadow: rgba(37, 211, 102, .16); }
+  .theme-gadgets { --storefront-glow: rgba(56, 189, 248, .16); --theme-background-pattern: linear-gradient(rgba(56, 189, 248, .08) 1px, transparent 1px), linear-gradient(90deg, rgba(56, 189, 248, .08) 1px, transparent 1px); --theme-background-size: 64px 64px; }
+  .theme-home-decor { --storefront-glow: rgba(212, 163, 115, .2); --theme-background-pattern: linear-gradient(135deg, rgba(147, 106, 74, .045) 25%, transparent 25%, transparent 50%, rgba(147, 106, 74, .045) 50%, rgba(147, 106, 74, .045) 75%, transparent 75%); --theme-background-size: 72px 72px; }
+  .theme-fashion { --storefront-glow: rgba(228, 213, 183, .18); --theme-background-pattern: repeating-linear-gradient(120deg, rgba(24, 24, 27, .035) 0 1px, transparent 1px 18px); --theme-background-size: 54px 54px; }
+  .theme-bakery { --storefront-glow: rgba(253, 164, 175, .2); --theme-background-pattern: radial-gradient(rgba(225, 29, 72, .08) 1px, transparent 1.5px); --theme-background-size: 28px 28px; }
+  .theme-grocery { --storefront-glow: rgba(134, 239, 172, .2); --theme-background-pattern: repeating-linear-gradient(45deg, rgba(22, 163, 74, .05) 0 2px, transparent 2px 22px); --theme-background-size: 62px 62px; }
+  .theme-car-accessories { --storefront-glow: rgba(248, 113, 113, .16); --theme-background-pattern: linear-gradient(135deg, rgba(248, 113, 113, .06) 25%, transparent 25%), linear-gradient(225deg, rgba(248, 113, 113, .06) 25%, transparent 25%); --theme-background-size: 34px 34px; }
+  .theme-toys { --storefront-glow: rgba(245, 158, 11, .18); --theme-background-pattern: linear-gradient(90deg, rgba(124, 58, 237, .045) 1px, transparent 1px), linear-gradient(rgba(245, 158, 11, .06) 1px, transparent 1px); --theme-background-size: 46px 46px; }
+  .theme-whatsapp-store { --theme-background-pattern: linear-gradient(135deg, rgba(37, 211, 102, .045) 25%, transparent 25%); --theme-background-size: 52px 52px; }
+  .storefront-hero-glow { background: var(--storefront-glow, rgba(255, 255, 255, .08)); }
+  @keyframes storefront-hero-rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes theme-background-drift { from { background-position: 0 0; } to { background-position: 160px 120px; } }
+  @keyframes storefront-badge-in { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes storefront-hero-float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-8px) rotate(1deg); } }
+  @keyframes storefront-glow { 0%, 100% { opacity: .55; transform: scale(1); } 50% { opacity: .85; transform: scale(1.08); } }
+  @keyframes storefront-grid-drift { from { background-position: 0 0, 0 0; } to { background-position: 42px 42px, 42px 42px; } }
+  @keyframes storefront-light-sweep { 0%, 25% { left: -18%; opacity: 0; } 42% { opacity: .8; } 68%, 100% { left: 112%; opacity: 0; } }
+  @keyframes storefront-section-reveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes storefront-product-reveal { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes storefront-card-orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   @keyframes auth-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes auth-logo-float { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-6px) rotate(2deg); } }
   @keyframes login-heading-glow { 50% { border-color: rgba(56, 189, 248, .32); } }
@@ -330,6 +394,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .storefront-theme-shell::before, .storefront-hero::before, .storefront-hero::after, .storefront-hero-copy, .storefront-hero-badge, .storefront-hero-title, .storefront-hero-description, .storefront-hero-pills, .storefront-hero-image, .storefront-hero-glow, .storefront-collection-panel, .storefront-arrivals-heading, .storefront-product-grid > *, .storefront-product-card::before { animation: none; }
   .hero-blob, .hero-receipt-lines, .hero-scan-line, .hero-float, .hero-product-card, .hero-cart-runner, .flow-share-visual svg, .flow-arrow svg { animation: none; }
   .landing-hero > .landing-shell > div:first-child, .landing-visual { animation: none; }
   .landing-page.reveal-ready .landing-reveal { opacity: 1; transform: none; transition: none; }
