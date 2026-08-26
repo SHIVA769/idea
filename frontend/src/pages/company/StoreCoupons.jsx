@@ -26,9 +26,9 @@ export const StoreCoupons = () => {
     discountValue: 10,
     minSpend: 0,
     maxSpend: 0,
-    totalLimit: 200,
-    userLimit: 1,
-    expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    perCouponLimit: 200,
+    perUserLimit: 1,
+    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     status: 'active',
   });
 
@@ -115,11 +115,11 @@ export const StoreCoupons = () => {
     },
     {
       header: 'Usage',
-      render: (c) => <span className="font-mono text-xs text-slate-500">{c.usedCount || 0} / {c.totalLimit > 0 ? c.totalLimit : '∞'}</span>,
+      render: (c) => <span className="font-mono text-xs text-slate-500">{c.usedCount || 0} / {c.perCouponLimit > 0 ? c.perCouponLimit : '∞'}</span>,
     },
     {
       header: 'Expiry Date',
-      render: (c) => <span className="text-xs text-slate-400 font-mono">{new Date(c.expiryDate).toLocaleDateString()}</span>,
+      render: (c) => <span className="text-xs text-slate-400 font-mono">{new Date(c.endDate).toLocaleDateString()}</span>,
     },
     {
       header: 'Status',
@@ -144,9 +144,9 @@ export const StoreCoupons = () => {
                 discountValue: c.discountValue,
                 minSpend: c.minSpend || 0,
                 maxSpend: c.maxSpend || 0,
-                totalLimit: c.totalLimit || 100,
-                userLimit: c.userLimit || 1,
-                expiryDate: new Date(c.expiryDate).toISOString().split('T')[0],
+                perCouponLimit: c.perCouponLimit || 100,
+                perUserLimit: c.perUserLimit || 1,
+                endDate: new Date(c.endDate).toISOString().split('T')[0],
                 status: c.status,
               });
               setActiveFormTab('basic');
@@ -181,9 +181,9 @@ export const StoreCoupons = () => {
               discountValue: 15,
               minSpend: 0,
               maxSpend: 0,
-              totalLimit: 300,
-              userLimit: 1,
-              expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              perCouponLimit: 300,
+              perUserLimit: 1,
+              endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
               status: 'active',
             });
             setActiveFormTab('basic');
@@ -240,7 +240,7 @@ export const StoreCoupons = () => {
                       className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border rounded-lg"
                     >
                       <option value="percentage">Percentage (%)</option>
-                      <option value="flat">Flat Amount ($)</option>
+                      <option value="fixed">Flat Amount ($)</option>
                     </select>
                   </div>
                   <div>
@@ -289,8 +289,8 @@ export const StoreCoupons = () => {
                     <input
                       type="number"
                       min="0"
-                      value={form.totalLimit}
-                      onChange={(e) => setForm({ ...form, totalLimit: Number(e.target.value) })}
+                      value={form.perCouponLimit}
+                      onChange={(e) => setForm({ ...form, perCouponLimit: Number(e.target.value) })}
                       className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border rounded-lg"
                     />
                   </div>
@@ -299,8 +299,8 @@ export const StoreCoupons = () => {
                     <input
                       type="date"
                       required
-                      value={form.expiryDate}
-                      onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
+                      value={form.endDate}
+                      onChange={(e) => setForm({ ...form, endDate: e.target.value })}
                       className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border rounded-lg"
                     />
                   </div>

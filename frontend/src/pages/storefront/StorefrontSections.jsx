@@ -403,24 +403,24 @@ export const WhatsAppProductCard = ({
   return (
     <div
       onClick={() => onQuickView(product)}
-      className={`group cursor-pointer overflow-hidden transition-all duration-300 ${themeConfig?.productCard || 'bg-white border border-slate-100 shadow-sm hover:shadow-lg'} ${themeConfig?.cardRadius || 'rounded-2xl'} flex flex-col`}
+      className={`group cursor-pointer overflow-visible transition-all duration-300 ${themeConfig?.productCard || 'bg-white border border-slate-100 shadow-sm hover:shadow-lg'} ${themeConfig?.cardRadius || 'rounded-2xl'} flex flex-col`}
     >
+      {product.badge && (
+        <span className={`absolute -top-3 left-3 z-10 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md -rotate-3 ${themeConfig?.saleBadge || 'bg-[#25D366] text-white'}`}>
+          {product.badge}
+        </span>
+      )}
+      {hasDiscount && (
+        <span className={`absolute -top-3 ${product.badge ? 'right-3' : 'left-3'} z-10 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md rotate-3 bg-rose-600 text-white`}>
+          {discountPct}% OFF
+        </span>
+      )}
       <div className="aspect-square bg-slate-50 relative overflow-hidden">
         <img
           src={product.thumbnail || 'https://via.placeholder.com/400'}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        {product.badge && (
-          <span className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm ${themeConfig?.saleBadge || 'bg-[#25D366] text-white'}`}>
-            {product.badge}
-          </span>
-        )}
-        {hasDiscount && (
-          <span className={`absolute top-3 ${product.badge ? 'right-3' : 'left-3'} px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm bg-rose-600 text-white`}>
-            {discountPct}% OFF
-          </span>
-        )}
         <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <span className="px-3 py-1.5 bg-white text-slate-900 rounded-lg text-xs font-bold flex items-center gap-1 shadow-md">
             <Eye className="w-3.5 h-3.5" />
