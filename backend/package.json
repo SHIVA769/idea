@@ -10,6 +10,7 @@
     "seed": "node seeds/seedData.js"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
     "axios": "^1.7.9",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.5",
@@ -18,7 +19,7 @@
     "express": "^4.21.2",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.9.5",
+    "mongoose": "^9.9.4",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.16",
@@ -28,6 +29,7 @@
     "twilio": "^6.1.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "prisma": "^5.22.0"
   }
 }

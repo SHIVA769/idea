@@ -1,12 +1,38 @@
 import crypto from 'crypto';
-import { User } from '../models/User.js';
-import { Company } from '../models/Company.js';
-import { Plan } from '../models/Plan.js';
-import { SystemSettings } from '../models/Settings.js';
+import bcrypt from 'bcryptjs';
+import { prisma } from '../config/prisma.js';
 import { generateToken } from '../middlewares/auth.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import { sendEmail } from '../services/mailer.js';
 import { ROLES } from '../config/constants.js';
+
+const normalizeEmail = (email = '') => String(email).trim().toLowerCase();
+
+const buildPermissions = (user) => {
+  if (user?.customRole?.permissions?.length) {
+    return user.customRole.permissions;
+  }
+
+  if (user?.role === ROLES.SUPER_ADMIN || user?.role === ROLES.COMPANY_OWNER) {
+    return ['*'];
+  }
+
+  return [];
+};
+
+const sanitizeUser = (user, company = null) => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  avatar: user.avatar,
+  phone: user.phone || '',
+  companyId: user.companyId,
+  company: company ? { id: company.id, name: company.name, plan: company.plan || null, referralCode: company.referralCode || null } : null,
+  permissions: buildPermissions(user),
+  preferredLanguage: user.preferredLanguage || 'en',
+  emailVerified: user.emailVerified,
+});
 
 export const register = async (req, res) => {
   try {
@@ -16,45 +42,52 @@ export const register = async (req, res) => {
       return sendError(res, 'Name, email, and password are required.', 400);
     }
 
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    const normalizedEmail = normalizeEmail(email);
+    const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existingUser) {
       return sendError(res, 'An account with this email already exists.', 400);
     }
 
-    // Check system settings for registration / verification
-    const systemSettings = await SystemSettings.findOne({ companyId: null });
+    const systemSettings = await prisma.settings.findFirst({ where: { companyId: null } });
     if (systemSettings && systemSettings.userRegistrationEnabled === false) {
       return sendError(res, 'Public user registration is currently disabled by administrator.', 403);
     }
 
-    // Default plan assignment
-    const defaultPlan = await Plan.findOne({ isDefault: true, isActive: true }) || await Plan.findOne({ isActive: true });
-
-    // Create Company
-    const referralCode = `WS-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
-    const company = await Company.create({
-      name: companyName || `${name}'s Company`,
-      email: email.toLowerCase(),
-      planId: defaultPlan?._id || null,
-      planBillingCycle: 'monthly',
-      referralCode,
-      status: 'active',
-      enableLogin: true,
-    });
+    const defaultPlan = await prisma.plan.findFirst({ where: { isDefault: true, isActive: true } })
+      ?? await prisma.plan.findFirst({ where: { isActive: true } });
 
     const verificationToken = crypto.randomBytes(24).toString('hex');
     const requiresVerification = systemSettings?.emailVerification || false;
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create User (Company Owner)
-    const user = await User.create({
-      name,
-      email: email.toLowerCase(),
-      password,
-      role: ROLES.COMPANY_OWNER,
-      companyId: company._id,
-      emailVerified: !requiresVerification,
-      verificationToken: requiresVerification ? verificationToken : null,
-      status: 'active',
+    const { company, user } = await prisma.$transaction(async (tx) => {
+      const referralCode = `WS-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+      const createdCompany = await tx.company.create({
+        data: {
+          name: companyName || `${name}'s Company`,
+          email: normalizedEmail,
+          planId: defaultPlan?.id || null,
+          planBillingCycle: 'monthly',
+          referralCode,
+          status: 'active',
+          enableLogin: true,
+        },
+      });
+
+      const createdUser = await tx.user.create({
+        data: {
+          name,
+          email: normalizedEmail,
+          password: hashedPassword,
+          role: ROLES.COMPANY_OWNER,
+          companyId: createdCompany.id,
+          emailVerified: !requiresVerification,
+          verificationToken: requiresVerification ? verificationToken : null,
+          status: 'active',
+        },
+      });
+
+      return { company: createdCompany, user: createdUser };
     });
 
     if (requiresVerification) {
@@ -66,19 +99,19 @@ export const register = async (req, res) => {
       });
     }
 
-    const token = generateToken({ userId: user._id, role: user.role, companyId: company._id });
+    const token = generateToken({ userId: user.id, role: user.role, companyId: company.id });
 
     return sendSuccess(
       res,
       {
         token,
         user: {
-          id: user._id,
+          id: user.id,
           name: user.name,
           email: user.email,
           role: user.role,
           avatar: user.avatar,
-          companyId: company._id,
+          companyId: company.id,
           companyName: company.name,
           emailVerified: user.emailVerified,
         },
@@ -100,7 +133,12 @@ export const login = async (req, res) => {
       return sendError(res, 'Email and password are required.', 400);
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() }).populate('roleId');
+    const normalizedEmail = normalizeEmail(email);
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      include: { customRole: true },
+    });
+
     if (!user) {
       return sendError(res, 'Invalid email or password.', 401);
     }
@@ -109,38 +147,38 @@ export const login = async (req, res) => {
       return sendError(res, 'Your account is disabled. Please contact administrator.', 403);
     }
 
-    const isMatch = await user.comparePassword(password);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return sendError(res, 'Invalid email or password.', 401);
     }
 
     let company = null;
     if (user.companyId) {
-      company = await Company.findById(user.companyId).populate('planId');
+      company = await prisma.company.findUnique({
+        where: { id: user.companyId },
+        include: { plan: true },
+      });
+
       if (company && !company.enableLogin && user.role !== ROLES.SUPER_ADMIN) {
         return sendError(res, 'Login is disabled for your company.', 403);
       }
     }
 
-    const token = generateToken({
-      userId: user._id,
-      role: user.role,
-      companyId: user.companyId,
-    });
+    const token = generateToken({ userId: user.id, role: user.role, companyId: user.companyId });
 
     return sendSuccess(
       res,
       {
         token,
         user: {
-          id: user._id,
+          id: user.id,
           name: user.name,
           email: user.email,
           role: user.role,
           avatar: user.avatar,
           companyId: user.companyId,
-          company: company ? { id: company._id, name: company.name, plan: company.planId } : null,
-          permissions: user.roleId?.permissions || (user.role === ROLES.SUPER_ADMIN || user.role === ROLES.COMPANY_OWNER ? ['*'] : []),
+          company: company ? { id: company.id, name: company.name, plan: company.plan } : null,
+          permissions: buildPermissions(user),
         },
       },
       'Logged in successfully.'
@@ -153,25 +191,21 @@ export const login = async (req, res) => {
 
 export const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate('roleId');
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { customRole: true },
+    });
+
     let company = null;
-    if (user.companyId) {
-      company = await Company.findById(user.companyId).populate('planId');
+    if (user?.companyId) {
+      company = await prisma.company.findUnique({
+        where: { id: user.companyId },
+        include: { plan: true },
+      });
     }
 
     return sendSuccess(res, {
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatar: user.avatar,
-        phone: user.phone,
-        companyId: user.companyId,
-        company: company ? { id: company._id, name: company.name, plan: company.planId, referralCode: company.referralCode } : null,
-        permissions: user.roleId?.permissions || (user.role === ROLES.SUPER_ADMIN || user.role === ROLES.COMPANY_OWNER ? ['*'] : []),
-        preferredLanguage: user.preferredLanguage,
-      },
+      user: sanitizeUser(user, company),
     });
   } catch (error) {
     return sendError(res, error.message, 500);
@@ -181,23 +215,29 @@ export const getMe = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const { name, email, avatar, phone, preferredLanguage } = req.body;
-    const user = await User.findById(req.user._id);
+    const existingUser = await prisma.user.findUnique({ where: { id: req.user.id } });
 
-    if (name) user.name = name;
-    if (avatar !== undefined) user.avatar = avatar;
-    if (phone !== undefined) user.phone = phone;
-    if (preferredLanguage) user.preferredLanguage = preferredLanguage;
+    const data = {};
+    if (name) data.name = name;
+    if (avatar !== undefined) data.avatar = avatar;
+    if (phone !== undefined) data.phone = phone;
+    if (preferredLanguage) data.preferredLanguage = preferredLanguage;
 
-    if (email && email.toLowerCase() !== user.email) {
-      const existing = await User.findOne({ email: email.toLowerCase() });
-      if (existing) {
+    if (email && normalizeEmail(email) !== existingUser.email) {
+      const conflict = await prisma.user.findUnique({ where: { email: normalizeEmail(email) } });
+      if (conflict) {
         return sendError(res, 'Email already in use by another user.', 400);
       }
-      user.email = email.toLowerCase();
+      data.email = normalizeEmail(email);
     }
 
-    await user.save();
-    return sendSuccess(res, { user }, 'Profile updated successfully.');
+    const updatedUser = await prisma.user.update({
+      where: { id: existingUser.id },
+      data,
+      include: { customRole: true },
+    });
+
+    return sendSuccess(res, { user: sanitizeUser(updatedUser) }, 'Profile updated successfully.');
   } catch (error) {
     return sendError(res, error.message, 500);
   }
@@ -210,14 +250,17 @@ export const updatePassword = async (req, res) => {
       return sendError(res, 'Current password and new password are required.', 400);
     }
 
-    const user = await User.findById(req.user._id);
-    const isMatch = await user.comparePassword(currentPassword);
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return sendError(res, 'Current password does not match.', 400);
     }
 
-    user.password = newPassword;
-    await user.save();
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    });
 
     return sendSuccess(res, null, 'Password updated successfully.');
   } catch (error) {
@@ -230,15 +273,20 @@ export const forgotPassword = async (req, res) => {
     const { email } = req.body;
     if (!email) return sendError(res, 'Email is required.', 400);
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const normalizedEmail = normalizeEmail(email);
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (!user) {
       return sendSuccess(res, null, 'If this email exists, a password reset link has been dispatched.');
     }
 
     const token = crypto.randomBytes(24).toString('hex');
-    user.resetPasswordToken = token;
-    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
-    await user.save();
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetPasswordToken: token,
+        resetPasswordExpires: new Date(Date.now() + 3600000),
+      },
+    });
 
     const resetUrl = `${process.env.APP_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
     const emailHTML = `
@@ -267,30 +315,24 @@ export const forgotPassword = async (req, res) => {
             <div class="header">
               <h1>🔐 Password Reset Request</h1>
             </div>
-            
             <div class="content">
               <div class="message">
                 <p>Hi <strong>${user.name || 'there'}</strong>,</p>
                 <p>We received a request to reset the password associated with your WhatsStore account. Click the button below to set a new password:</p>
               </div>
-              
               <div class="button-wrapper">
                 <a href="${resetUrl}" class="reset-button">Reset Your Password</a>
               </div>
-              
               <p style="text-align: center; color: #999; font-size: 12px;">Or paste this link in your browser:</p>
               <p style="text-align: center; word-break: break-all;"><span class="link-text">${resetUrl}</span></p>
-              
               <div class="warning">
                 <strong>⏱️ This link expires in 1 hour</strong><br>
                 If you didn't request this reset, please ignore this email. Your account remains secure.
               </div>
-              
               <p style="margin-top: 24px; color: #666; font-size: 13px;">
                 If you need help, reply to this email or contact our support team at <a href="mailto:support@whatsstore.io" style="color: #0284c7; text-decoration: none;">support@whatsstore.io</a>
               </p>
             </div>
-            
             <div class="footer">
               <p style="margin: 0;">© 2026 WhatsStore. All rights reserved.<br>WhatsStore — SaaS E-commerce Platform for WhatsApp</p>
             </div>
@@ -318,19 +360,26 @@ export const resetPassword = async (req, res) => {
       return sendError(res, 'Token and new password are required.', 400);
     }
 
-    const user = await User.findOne({
-      resetPasswordToken: token,
-      resetPasswordExpires: { $gt: Date.now() },
+    const user = await prisma.user.findFirst({
+      where: {
+        resetPasswordToken: token,
+        resetPasswordExpires: { gt: new Date() },
+      },
     });
 
     if (!user) {
       return sendError(res, 'Invalid or expired password reset link.', 400);
     }
 
-    user.password = newPassword;
-    user.resetPasswordToken = null;
-    user.resetPasswordExpires = null;
-    await user.save();
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordExpires: null,
+      },
+    });
 
     return sendSuccess(res, null, 'Password has been reset successfully. Please sign in with your new password.');
   } catch (error) {
@@ -341,22 +390,23 @@ export const resetPassword = async (req, res) => {
 export const impersonateCompany = async (req, res) => {
   try {
     const { companyId } = req.params;
-    const company = await Company.findById(companyId);
+    const company = await prisma.company.findUnique({ where: { id: companyId } });
     if (!company) {
       return sendError(res, 'Company not found.', 404);
     }
 
-    const ownerUser = await User.findOne({ companyId, role: ROLES.COMPANY_OWNER }) || await User.findOne({ companyId });
+    const ownerUser = await prisma.user.findFirst({ where: { companyId, role: ROLES.COMPANY_OWNER } })
+      ?? await prisma.user.findFirst({ where: { companyId } });
+
     if (!ownerUser) {
       return sendError(res, 'No user found for this company.', 404);
     }
 
-    // Generate short-lived impersonation token (1 hour)
     const token = generateToken({
-      userId: ownerUser._id,
+      userId: ownerUser.id,
       role: ownerUser.role,
-      companyId: company._id,
-      impersonatedCompanyId: company._id,
+      companyId: company.id,
+      impersonatedCompanyId: company.id,
     }, '1h');
 
     return sendSuccess(res, { token, company, user: ownerUser }, `Logged in as company ${company.name}`);

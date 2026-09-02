@@ -17,29 +17,34 @@ import { generateOrderInvoicePDF } from '../services/pdfInvoiceService.js';
 import { dispatchWebhook } from '../services/webhookService.js';
 import { sendEmail } from '../services/mailer.js';
 import { ROLES, PERMISSION_MODULES, STORE_THEMES } from '../config/constants.js';
+import { prisma } from '../config/prisma.js';
 
 // Helper to extract effective companyId
 const getCompanyId = (req) => req.impersonatedCompanyId || req.effectiveCompanyId || req.user?.companyId;
 const getAccessibleStoreIds = async (req) => {
   const companyId = getCompanyId(req);
   if (req.user?.role === ROLES.STAFF && req.user.storeId) {
-    const store = await Store.findOne({ _id: req.user.storeId, companyId }).select('_id');
-    return store ? [store._id] : [];
+    const store = await prisma.store.findFirst({ where: { id: req.user.storeId, companyId }, select: { id: true } });
+    return store ? [store.id] : [];
   }
-  const stores = await Store.find({ companyId }).select('_id');
-  return stores.map((store) => store._id);
+  const stores = await prisma.store.findMany({ where: { companyId }, select: { id: true } });
+  return stores.map((store) => store.id);
 };
+
+const withLegacyId = (record) => ({ ...record, _id: record.id });
 
 export const getCompanyNotifications = async (req, res) => {
   try {
     const { unread } = req.query;
-    const query = { storeId: { $in: await getAccessibleStoreIds(req) } };
-    if (unread === 'true') query.read = false;
+    const where = { companyId: getCompanyId(req), storeId: { in: await getAccessibleStoreIds(req) } };
+    if (unread === 'true') where.read = false;
 
-    const notifications = await Notification.find(query)
-      .populate('orderId', 'orderNumber total paymentMethod paymentStatus customerName timeline')
-      .sort({ createdAt: -1 })
-      .limit(50);
+    const notifications = await prisma.notification.findMany({
+      where,
+      include: { order: { select: { orderNumber: true, total: true, paymentMethod: true, paymentStatus: true, customerName: true, timeline: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
     return sendSuccess(res, notifications);
   } catch (error) {
     return sendError(res, error.message, 500);
@@ -112,21 +117,18 @@ export const getCompanyDashboardStats = async (req, res) => {
 export const getStores = async (req, res) => {
   try {
     const companyId = getCompanyId(req);
-    const stores = await Store.find({ companyId }).sort({ createdAt: -1 });
+    const stores = await prisma.store.findMany({ where: { companyId }, orderBy: { createdAt: 'desc' } });
 
     const enriched = await Promise.all(
       stores.map(async (s) => {
         const [orderSummary, productCount, customerCount] = await Promise.all([
-          Order.aggregate([
-            { $match: { storeId: s._id } },
-            { $group: { _id: null, orderCount: { $sum: 1 }, revenue: { $sum: '$total' } } },
-          ]),
-          Product.countDocuments({ storeId: s._id }),
-          Customer.countDocuments({ storeId: s._id }),
+          prisma.order.aggregate({ where: { storeId: s.id }, _count: { _all: true }, _sum: { total: true } }),
+          prisma.product.count({ where: { storeId: s.id } }),
+          prisma.customer.count({ where: { storeId: s.id } }),
         ]);
-        const summary = orderSummary[0] || { orderCount: 0, revenue: 0 };
+        const summary = { orderCount: orderSummary._count._all, revenue: orderSummary._sum.total || 0 };
         return {
-          ...s.toObject(),
+          ...withLegacyId(s),
           orderCount: summary.orderCount,
           revenue: `$${summary.revenue.toFixed(2)}`,
           productCount,
@@ -137,12 +139,9 @@ export const getStores = async (req, res) => {
 
     const totalStores = stores.length;
     const activeStores = stores.filter((s) => s.status === 'active').length;
-    const totalCustomers = await Customer.countDocuments({ companyId });
-    const revenueSummary = await Order.aggregate([
-      { $match: { companyId } },
-      { $group: { _id: null, totalRevenue: { $sum: '$total' } } },
-    ]);
-    const totalRevenue = revenueSummary[0]?.totalRevenue || 0;
+    const totalCustomers = await prisma.customer.count({ where: { companyId } });
+    const revenueSummary = await prisma.order.aggregate({ where: { companyId }, _sum: { total: true } });
+    const totalRevenue = revenueSummary._sum.total || 0;
 
     return sendSuccess(res, {
       stores: enriched,
@@ -242,24 +241,33 @@ export const getProducts = async (req, res) => {
   try {
     const companyId = getCompanyId(req);
     const { storeId, search, categoryId, status, page = 1, limit = 10 } = req.query;
-    const query = { companyId };
+    const where = { companyId };
+    if (storeId && storeId !== 'all') where.storeId = storeId;
+    if (categoryId && categoryId !== 'all') where.categoryId = categoryId;
+    if (status && status !== 'all') where.status = status;
+    if (search) where.OR = [{ name: { contains: search, mode: 'insensitive' } }, { sku: { contains: search, mode: 'insensitive' } }];
 
-    if (storeId && storeId !== 'all') query.storeId = storeId;
-    if (categoryId && categoryId !== 'all') query.categoryId = categoryId;
-    if (status && status !== 'all') query.status = status;
-    if (search) {
-      query.$or = [{ name: { $regex: search, $options: 'i' } }, { sku: { $regex: search, $options: 'i' } }];
-    }
-
-    const total = await Product.countDocuments(query);
-    const products = await Product.find(query)
-      .populate('categoryId taxId storeId')
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
+    const pageNumber = Number(page);
+    const pageLimit = Number(limit);
+    const [total, products, allProducts] = await Promise.all([
+      prisma.product.count({ where }),
+      prisma.product.findMany({
+        where,
+        include: { category: true, tax: true, store: true },
+        orderBy: { createdAt: 'desc' },
+        skip: (pageNumber - 1) * pageLimit,
+        take: pageLimit,
+      }),
+      prisma.product.findMany({ where: { companyId }, select: { status: true, price: true, stockQuantity: true } }),
+    ]);
+    const normalizedProducts = products.map((product) => ({
+      ...withLegacyId(product),
+      category: product.category ? withLegacyId(product.category) : null,
+      tax: product.tax ? withLegacyId(product.tax) : null,
+      store: product.store ? withLegacyId(product.store) : null,
+    }));
 
     // Summary cards
-    const allProducts = await Product.find({ companyId });
     const totalCount = allProducts.length;
     const activeCount = allProducts.filter((p) => p.status === 'active').length;
     const lowStockCount = allProducts.filter((p) => (p.stockQuantity || 0) <= 5).length;
@@ -268,7 +276,7 @@ export const getProducts = async (req, res) => {
     return sendSuccess(
       res,
       {
-        products,
+        products: normalizedProducts,
         summaryCards: {
           totalProducts: totalCount,
           activeProducts: `${activeCount} (${totalCount ? Math.round((activeCount / totalCount) * 100) : 0}%)`,
@@ -278,7 +286,7 @@ export const getProducts = async (req, res) => {
       },
       'Products retrieved',
       200,
-      { page: Number(page), limit: Number(limit), total, totalPages: Math.ceil(total / limit) }
+      { page: pageNumber, limit: pageLimit, total, totalPages: Math.ceil(total / pageLimit) }
     );
   } catch (error) {
     return sendError(res, error.message, 500);
@@ -410,15 +418,15 @@ export const getCategories = async (req, res) => {
   try {
     const companyId = getCompanyId(req);
     const { storeId } = req.query;
-    const query = { companyId };
-    if (storeId && storeId !== 'all') query.storeId = storeId;
+    const where = { companyId };
+    if (storeId && storeId !== 'all') where.storeId = storeId;
 
-    const categories = await Category.find(query).populate('parentId').sort({ sortOrder: 1, name: 1 });
+    const categories = await prisma.category.findMany({ where, include: { parent: true }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
 
     const enriched = await Promise.all(
       categories.map(async (c) => {
-        const productCount = await Product.countDocuments({ categoryId: c._id });
-        return { ...c.toObject(), productCount };
+        const productCount = await prisma.product.count({ where: { categoryId: c.id } });
+        return { ...withLegacyId(c), parentId: c.parent ? withLegacyId(c.parent) : null, productCount };
       })
     );
 
@@ -492,15 +500,15 @@ export const getTaxes = async (req, res) => {
   try {
     const companyId = getCompanyId(req);
     const { storeId } = req.query;
-    const query = { companyId };
-    if (storeId && storeId !== 'all') query.storeId = storeId;
+    const where = { companyId };
+    if (storeId && storeId !== 'all') where.storeId = storeId;
 
-    const taxes = await Tax.find(query).sort({ priority: 1 });
+    const taxes = await prisma.tax.findMany({ where, orderBy: { priority: 'asc' } });
 
     const enriched = await Promise.all(
       taxes.map(async (t) => {
-        const productsCount = await Product.countDocuments({ taxId: t._id });
-        return { ...t.toObject(), productsUsingCount: productsCount };
+        const productsCount = await prisma.product.count({ where: { taxId: t.id } });
+        return { ...withLegacyId(t), productsUsingCount: productsCount };
       })
     );
 
@@ -1218,19 +1226,25 @@ export const deleteRole = async (req, res) => {
 export const getCompanyPlansData = async (req, res) => {
   try {
     const companyId = getCompanyId(req);
-    const company = await Company.findById(companyId).populate('planId');
-    const plans = await Plan.find({ isActive: true }).sort({ monthlyPrice: 1 });
-    const requests = await PlanRequest.find({ companyId }).populate('planId').sort({ requestedAt: -1 });
-    const orders = await PlanOrder.find({ companyId }).populate('planId').sort({ createdAt: -1 });
+    const [company, plans, requests, orders, stores, users, products] = await Promise.all([
+      prisma.company.findUnique({ where: { id: companyId }, include: { plan: true } }),
+      prisma.plan.findMany({ where: { isActive: true }, orderBy: { monthlyPrice: 'asc' } }),
+      prisma.planRequest.findMany({ where: { companyId }, include: { plan: true }, orderBy: { requestedAt: 'desc' } }),
+      prisma.planOrder.findMany({ where: { companyId }, include: { plan: true }, orderBy: { createdAt: 'desc' } }),
+      prisma.store.count({ where: { companyId } }),
+      prisma.user.count({ where: { companyId } }),
+      prisma.product.count({ where: { companyId } }),
+    ]);
 
     return sendSuccess(res, {
-      currentPlan: company?.planId,
+      currentPlan: company?.plan ? withLegacyId(company.plan) : null,
       billingCycle: company?.planBillingCycle || 'monthly',
-      expiresAt: company?.planExpiresAt,
-      isTrialActive: company?.isTrialActive,
-      plans,
-      requests,
-      orders,
+      expiresAt: company?.planExpiresAt || null,
+      isTrialActive: company?.isTrialActive || false,
+      plans: plans.map(withLegacyId),
+      requests: requests.map((request) => ({ ...withLegacyId(request), plan: request.plan ? withLegacyId(request.plan) : null })),
+      orders: orders.map((order) => ({ ...withLegacyId(order), plan: order.plan ? withLegacyId(order.plan) : null })),
+      usage: { stores, users, products },
     });
   } catch (error) {
     return sendError(res, error.message, 500);

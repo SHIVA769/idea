@@ -1,7 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { User } from '../models/User.js';
-import { Company } from '../models/Company.js';
-import { Role } from '../models/Role.js';
+import { prisma } from '../config/prisma.js';
 import { sendError } from '../utils/response.js';
 import { ROLES } from '../config/constants.js';
 
@@ -38,7 +36,11 @@ export const authenticate = async (req, res, next) => {
       return sendError(res, 'Invalid or expired authentication token.', 401);
     }
 
-    const user = await User.findById(decoded.userId).populate('roleId');
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      include: { customRole: true },
+    });
+
     if (!user) {
       return sendError(res, 'User account no longer exists.', 401);
     }
@@ -47,12 +49,18 @@ export const authenticate = async (req, res, next) => {
       return sendError(res, 'This user account has been disabled.', 403);
     }
 
-    // Attach user
-    req.user = user;
+    req.user = {
+      ...user,
+      _id: user.id,
+      roleId: user.customRole ? { permissions: user.customRole.permissions } : null,
+    };
 
-    // Check if user is associated with a company
     if (user.companyId) {
-      const company = await Company.findById(user.companyId).populate('planId');
+      const company = await prisma.company.findUnique({
+        where: { id: user.companyId },
+        include: { plan: true },
+      });
+
       if (company) {
         if (!company.enableLogin && user.role !== ROLES.SUPER_ADMIN) {
           return sendError(res, 'Login is currently disabled for this company.', 403);
@@ -61,7 +69,6 @@ export const authenticate = async (req, res, next) => {
       }
     }
 
-    // Impersonation token support (Super admin impersonating a company)
     if (decoded.impersonatedCompanyId) {
       req.impersonatedCompanyId = decoded.impersonatedCompanyId;
     }
@@ -95,7 +102,6 @@ export const requireRole = (allowedRoles = []) => {
  */
 export const requireCompanyScope = (req, res, next) => {
   if (req.user.role === ROLES.SUPER_ADMIN) {
-    // Super admin can operate without or with companyId parameter
     return next();
   }
 
@@ -114,10 +120,9 @@ export const requireCompanyScope = (req, res, next) => {
 export const requirePermission = (permissionKey) => {
   return (req, res, next) => {
     if (req.user.role === ROLES.SUPER_ADMIN || req.user.role === ROLES.COMPANY_OWNER) {
-      return next(); // Super admin and Company Owner have all permissions
+      return next();
     }
 
-    // Check staff permissions from attached Role
     const rolePermissions = req.user.roleId?.permissions || [];
     if (rolePermissions.includes(permissionKey) || rolePermissions.includes('*')) {
       return next();
